@@ -6,11 +6,14 @@ import MainScreen from './screens/main-screen'
 import AboutScreen from './screens/about-screen'
 import Sidebar from './components/sidebar'
 import SetupScreen from './screens/setup-screen'
+import { authenticadedFetch } from './utils/wpapi';
+
 
 const Drawer = createDrawerNavigator()
 
 const initialData = {
   connected: false,
+  loggedin: false,
   site_title: '',
   site_home: '',
   site_icon_url: '',
@@ -22,6 +25,7 @@ const initialData = {
 
 const App = () => {
   const [data, setData] = useState(initialData)
+  const [todos, setTodos] = useState([])
   const [wpURL, setWPURL] = useState('')
   const [login, setLogin] = useState('')
   const [pass, setPass] = useState('')
@@ -46,10 +50,26 @@ const App = () => {
       if (read) {
           setData( JSON.parse( read ) );
           console.log('READING CONFIG: ', read);
-
       }
     } );
   }, []);
+
+  useEffect(() => {
+    if ( data.connected ) {
+      // Gotta load those todos.
+      loadTodos( data );
+    }
+  }, [data, wpURL, login, pass]);
+
+  function loadTodos( data ) {
+    const cpt = data.post_types.find( type => type.slug === data.post_type );
+    const url = `http://${wpURL}/?rest_route=/${cpt.rest_namespace}${cpt.rest_base}`;
+    console.log('URL', url);
+    authenticadedFetch( url, {}, login, pass ).then( response => {
+      console.log( 'TODOS', response );
+      setTodos( response );
+    });
+  }
 
   function logOut() {
     setData( initialData );
@@ -85,7 +105,7 @@ const App = () => {
         overlayColor: '#00000000'
       }}
     >
-      <Drawer.Screen name="Main" component={MainScreen} />
+      <Drawer.Screen name="Main" component={ () => <MainScreen todos={ todos } /> } />
       <Drawer.Screen name="About" component={AboutScreen} />
     </Drawer.Navigator>
   )

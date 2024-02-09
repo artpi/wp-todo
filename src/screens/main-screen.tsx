@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Icon, VStack, useColorModeValue, Fab } from 'native-base'
 import { AntDesign } from '@expo/vector-icons'
 import AnimatedColorBox from '../components/animated-color-box'
@@ -7,22 +7,13 @@ import shortid from 'shortid'
 import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
 
-const initialData = [
-  {
-    id: shortid.generate(),
-    subject: 'Buy movie tickets for Friday',
-    done: false
-  },
-  {
-    id: shortid.generate(),
-    subject: 'Make a React Native tutorial',
-    done: false
-  }
-]
-
-export default function MainScreen() {
-  const [data, setData] = useState(initialData)
+export default function MainScreen( { todos } ) {
+  const [data, setData] = useState( [] )
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setData( todos.map( post => ( { id:post.id, subject: post.title.rendered, done: false } ) ) )
+  }, [todos])
 
   const handleToggleTaskItem = useCallback(item => {
     setData(prevData => {

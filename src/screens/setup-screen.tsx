@@ -5,6 +5,7 @@ import Masthead from '../components/masthead'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeSyntheticEvent, TextInputChangeEventData, ActivityIndicator, View } from 'react-native'
 import {Picker} from '@react-native-picker/picker';
+import { authenticadedFetch } from '../utils/wpapi';
 
 
 export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, setPass, data, setData }) {
@@ -12,22 +13,6 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
   const [connecting, setConnecting] = useState(false);
   const [err, setErr] = useState('')
 
-  function authenticadedFetch( url: string, params = {}, username: string, password: string ) {
-    const args = {
-      ...params,
-      headers: {
-        'Authorization': 'Basic ' + btoa( username + ':' + password ),
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    }
-    return fetch( url, args ).then((response) => response.json()).then( response => {
-      if ( response.code ) {
-        return Promise.reject( response );
-      }
-      return Promise.resolve( response );
-    } );
-  }
 
   function connectWP( url: string, username: string, password: string ) {
     //normalize url, add https if not present
@@ -117,7 +102,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
           </View>
       ) }
 
-      { ! connecting && (
+      { ! connecting && ! data.username && (
         <>
         <Input
               margin={ '3'}
