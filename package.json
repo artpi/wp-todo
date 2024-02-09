@@ -1,19 +1,19 @@
 {
-  "name": "animated-todo",
-  "description": "A smoothly animated ToDo app built with React Native",
-  "version": "1.0.0",
+  "name": "wp-todo",
+  "description": "A TODO App using WordPress as a backend",
+  "version": "0.0.1",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/craftzdog/react-native-animated-todo.git"
+    "url": "git@github.com:artpi/wp-todo.git"
   },
   "author": {
-    "name": "Takuya Matsuyama",
-    "url": "https://www.craftz.dog/"
+    "name": "Artpi",
+    "url": "https://piszek.com"
   },
   "license": "MIT",
   "keywords": [
     "react-native",
-    "tutorial",
+    "wordpress",
     "todo"
   ],
   "main": "node_modules/expo/AppEntry.js",
