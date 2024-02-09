@@ -187,7 +187,9 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                 colorScheme="primary"
                 margin={ '10%' }
                 onPress={ () => {
-                    AsyncStorage.setItem( 'config', JSON.stringify( data ) );
+                    const newData = { ...data, connected: true };
+                    setData( newData );
+                    AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
                 }}
                 >{ "Continue" }</Button>
           </>

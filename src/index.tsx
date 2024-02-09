@@ -10,13 +10,14 @@ import SetupScreen from './screens/setup-screen'
 const Drawer = createDrawerNavigator()
 
 const initialData = {
+  connected: false,
   site_title: '',
   site_home: '',
   site_icon_url: '',
   post_types: [],
   post_type: '',
   username: '',
-  gravatar: ''
+  gravatar: '',
 }
 
 const App = () => {
@@ -41,32 +42,53 @@ const App = () => {
           setPass( l );
       }
     } );
+    AsyncStorage.getItem('config').then( read => {
+      if (read) {
+          setData( JSON.parse( read ) );
+          console.log('READING CONFIG: ', read);
+
+      }
+    } );
   }, []);
 
-  return ( <SetupScreen
-    wpURL={wpURL}
-    login={login}
-    pass={pass}
-    setWPURL={setWPURL}
-    setLogin={setLogin}
-    setPass={setPass}
-    data={data}
-    setData={setData}
-  /> );
-  // return (
-  //   <Drawer.Navigator
-  //     initialRouteName="Main"
-  //     drawerContent={props => <Sidebar {...props} />}
-  //     screenOptions={{
-  //       headerShown: false,
-  //       drawerType: 'back',
-  //       overlayColor: '#00000000'
-  //     }}
-  //   >
-  //     <Drawer.Screen name="Main" component={MainScreen} />
-  //     <Drawer.Screen name="About" component={AboutScreen} />
-  //   </Drawer.Navigator>
-  // )
+  function logOut() {
+    setData( initialData );
+    setWPURL('');
+    setLogin('');
+    setPass('');
+    AsyncStorage.removeItem('wpurl');
+    AsyncStorage.removeItem('wplogin');
+    AsyncStorage.removeItem('wppass');
+    AsyncStorage.removeItem('config');
+  }
+
+  if ( !data.connected ) {
+    return ( <SetupScreen
+      wpURL={wpURL}
+      login={login}
+      pass={pass}
+      setWPURL={setWPURL}
+      setLogin={setLogin}
+      setPass={setPass}
+      data={data}
+      setData={setData}
+    /> );
+  }
+
+  return (
+    <Drawer.Navigator
+      initialRouteName="Main"
+      drawerContent={props => <Sidebar logOut={ logOut } data={data} {...props} />}
+      screenOptions={{
+        headerShown: false,
+        drawerType: 'back',
+        overlayColor: '#00000000'
+      }}
+    >
+      <Drawer.Screen name="Main" component={MainScreen} />
+      <Drawer.Screen name="About" component={AboutScreen} />
+    </Drawer.Navigator>
+  )
 }
 
 export default App

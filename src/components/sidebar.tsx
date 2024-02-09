@@ -15,9 +15,9 @@ import { Feather } from '@expo/vector-icons'
 import MenuButton from './menu-button'
 
 const Sidebar = (props: DrawerContentComponentProps) => {
-  const { state, navigation } = props
+  const { state, navigation, data, logOut } = props
   const currentRoute = state.routeNames[state.index]
-
+console.log('DAT', data);
   const handlePressBackButton = useCallback(() => {
     navigation.closeDrawer()
   }, [navigation])
@@ -51,7 +51,9 @@ const Sidebar = (props: DrawerContentComponentProps) => {
           />
         </HStack>
         <Avatar
-          source={require('../assets/profile-image.png')}
+          source={{
+            uri: data.gravatar
+          }}
           size="xl"
           borderRadius={100}
           mb={6}
@@ -59,7 +61,10 @@ const Sidebar = (props: DrawerContentComponentProps) => {
           borderWidth={3}
         />
         <Heading mb={4} size="xl">
-          Takuya Matsuyama
+          { '@' + data.username }
+        </Heading>
+        <Heading mb={4} size="l">
+          { data.site_title }
         </Heading>
         <MenuButton
           active={currentRoute === 'Main'}
@@ -74,6 +79,13 @@ const Sidebar = (props: DrawerContentComponentProps) => {
           icon="info"
         >
           About
+        </MenuButton>
+        <MenuButton
+          active={ false }
+          onPress={ () => logOut()}
+          icon="info"
+        >
+          Log Out
         </MenuButton>
       </VStack>
       <Center>
