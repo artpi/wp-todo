@@ -1,5 +1,7 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { createDrawerNavigator } from '@react-navigation/drawer'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import MainScreen from './screens/main-screen'
 import AboutScreen from './screens/about-screen'
 import Sidebar from './components/sidebar'
@@ -7,8 +9,50 @@ import SetupScreen from './screens/setup-screen'
 
 const Drawer = createDrawerNavigator()
 
+const initialData = {
+  site_title: '',
+  site_home: '',
+  site_icon_url: '',
+  post_types: [],
+  post_type: '',
+  username: '',
+  gravatar: ''
+}
+
 const App = () => {
-  return ( <SetupScreen /> );
+  const [data, setData] = useState(initialData)
+  const [wpURL, setWPURL] = useState('')
+  const [login, setLogin] = useState('')
+  const [pass, setPass] = useState('')
+
+  useEffect(() => {
+    AsyncStorage.getItem('wpurl').then( url => {
+        if (url) {
+            setWPURL(url)
+        }
+    } );
+    AsyncStorage.getItem('wplogin').then( l => {
+      if (l) {
+          setLogin( l );
+      }
+    } );
+    AsyncStorage.getItem('wppass').then( l => {
+      if (l) {
+          setPass( l );
+      }
+    } );
+  }, []);
+
+  return ( <SetupScreen
+    wpURL={wpURL}
+    login={login}
+    pass={pass}
+    setWPURL={setWPURL}
+    setLogin={setLogin}
+    setPass={setPass}
+    data={data}
+    setData={setData}
+  /> );
   // return (
   //   <Drawer.Navigator
   //     initialRouteName="Main"
