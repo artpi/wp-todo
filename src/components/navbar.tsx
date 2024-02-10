@@ -14,6 +14,7 @@ const NavBar = () => {
     <HStack w="full" h={32} alignItems="center" alignContent="center" p={4}>
       <IconButton
         onPress={handlePressMenuButton}
+        backgroundColor={'blue.500'}
         borderRadius={100}
         _icon={{
           as: Feather,

@@ -62,7 +62,7 @@ export default function MainScreen( { todos, refresh, refreshing, sync } ) {
     >
       <Masthead
         title="Lets get doin!"
-        // image={require('../assets/masthead.png')}
+        image={require('../assets/masthead-main.png')}
       >
         <NavBar />
       </Masthead>

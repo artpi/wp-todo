@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { useColorModeValue, Input, Button, Heading, Text } from 'native-base'
+import { useColorModeValue, Input, Button, Heading, Text, VStack, Avatar } from 'native-base'
 import AnimatedColorBox from '../components/animated-color-box'
 import Masthead from '../components/masthead'
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -91,9 +91,20 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
       w="full"
     >
       <Masthead
-        title="Tell me more about your WordPress"
+        title=""
+        image={require('../assets/masthead-start.png')}
       >
       </Masthead>
+      <VStack
+        flex={1}
+        space={1}
+        bg={useColorModeValue('warmGray.50', 'primary.900')}
+        mt="-20px"
+        borderTopLeftRadius="20px"
+        borderTopRightRadius="20px"
+        pt="20px"
+      >
+
       { connecting && (
           <View style={ { margin: '12px' } }>
             <ActivityIndicator size="large"  />
@@ -149,7 +160,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
       ) }
 
       <>
-        { data.site_title && <Heading p={6} size="m">
+        { data.connected && data.site_title && <Heading p={6} size="m">
           { "Connected to " + data.site_title }
         </Heading> }
         { data.post_types.length > 0 && (
@@ -178,7 +189,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
           </>
         ) }
       </>
-
+      </VStack>
     </AnimatedColorBox>
   )
 }
