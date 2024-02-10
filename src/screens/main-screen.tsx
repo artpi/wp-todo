@@ -7,7 +7,7 @@ import shortid from 'shortid'
 import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
 
-export default function MainScreen( { todos } ) {
+export default function MainScreen( { todos, refresh, refreshing } ) {
   const [data, setData] = useState( [] )
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
 
@@ -72,6 +72,8 @@ export default function MainScreen( { todos } ) {
         pt="20px"
       >
         <TaskList
+          refresh={refresh}
+          refreshing={ refreshing }
           data={data}
           onToggleItem={handleToggleTaskItem}
           onChangeSubject={handleChangeTaskItemSubject}

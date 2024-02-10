@@ -4,6 +4,7 @@ import {
   PanGestureHandlerProps,
   ScrollView
 } from 'react-native-gesture-handler'
+import { RefreshControl } from 'react-native'
 import TaskItem from './task-item'
 import { makeStyledComponent } from '../utils/styled'
 
@@ -102,7 +103,9 @@ export const AnimatedTaskItem = (props: TaskItemProps) => {
 
 export default function TaskList(props: TaskListProps) {
   const {
+    refresh,
     data,
+    refreshing,
     editingItemId,
     onToggleItem,
     onChangeSubject,
@@ -112,8 +115,15 @@ export default function TaskList(props: TaskListProps) {
   } = props
   const refScrollView = useRef(null)
 
+
   return (
-    <StyledScrollView ref={refScrollView} w="full">
+    <StyledScrollView ref={refScrollView} w="full" refreshControl = {
+      <RefreshControl
+        refreshing={refreshing}
+        onRefresh={ () => { refresh() } }
+      />
+    
+    }>
       <AnimatePresence>
         {data.map(item => (
           <AnimatedTaskItem

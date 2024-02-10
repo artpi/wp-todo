@@ -7,6 +7,7 @@ import AboutScreen from './screens/about-screen'
 import Sidebar from './components/sidebar'
 import SetupScreen from './screens/setup-screen'
 import { authenticadedFetch } from './utils/wpapi';
+import { err } from 'react-native-svg';
 
 
 const Drawer = createDrawerNavigator()
@@ -28,6 +29,7 @@ const App = () => {
   const [todos, setTodos] = useState([])
   const [wpURL, setWPURL] = useState('')
   const [login, setLogin] = useState('')
+  const [ refreshing, setRefreshing ] = useState( false )
   const [pass, setPass] = useState('')
 
   useEffect(() => {
@@ -62,6 +64,7 @@ const App = () => {
   }, [data, wpURL, login, pass]);
 
   function loadTodos( data ) {
+    setRefreshing( true );
     const cpt = data.post_types.find( type => type.slug === data.post_type );
     if( !cpt ) {
       return;
@@ -71,6 +74,10 @@ const App = () => {
     authenticadedFetch( url, {}, login, pass ).then( response => {
       console.log( 'TODOS', response );
       setTodos( response );
+      setRefreshing( false );
+    }).catch ( err => {
+      console.log( 'ERROR', err );
+      setRefreshing( false );
     });
   }
 
@@ -108,7 +115,16 @@ const App = () => {
         overlayColor: '#00000000'
       }}
     >
-      <Drawer.Screen name="Main" component={ () => <MainScreen todos={ todos } /> } />
+      <Drawer.Screen name="Main">
+        {(props) => (
+          <MainScreen
+              todos={ todos }
+              refresh={ () => loadTodos( data ) }
+              refreshing={ refreshing }
+              {...props }
+          />
+      )}
+      </Drawer.Screen>
       <Drawer.Screen name="About" component={AboutScreen} />
     </Drawer.Navigator>
   )
