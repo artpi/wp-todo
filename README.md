@@ -1,6 +1,18 @@
 # TODO App with WordPress Backend
 
-This is a react native App that syncs with WordPress.
+This is a react native App that syncs with WordPress as a backend.
+
+## Why another TODO App?
+
+You definitely are correct, sir. There is no shortage of TODO apps.
+
+I have been running personal automation for a while now and am constantly frustrated by providers going out of business, getting acquired, blocking API access or pulling the rug under my favorite software.
+
+- WordPress is the operating system of the web. It runs on anything, is portable and you will always be able to run it
+- By syncing my todos with WordPress, I can implement AI capabilities that I want on the WordPress end
+- I am enamoured by the idea of WordPress being the backend for mobile development.
+
+**CLoud is just somebody else's computer. You can run your own cloud with WordPress.**
 
 ## Screenshots 
 
@@ -16,7 +28,7 @@ This is a react native App that syncs with WordPress.
 
 ## How to dev
 
-This project can be run from the Expo client app.
+This project can be run from the Expo client app, as well as deployed to the cloud.
 
 ```sh
 yarn
