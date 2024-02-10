@@ -49,10 +49,17 @@ export default function MainScreen( { todos, refresh, refreshing, sync } ) {
   }, [])
   const handleRemoveItem = useCallback(item => {
     setData(prevData => {
-      const newData = prevData.filter(i => i !== item)
+      const newData = [...prevData]
+      const index = prevData.indexOf(item)
+      newData[index] = {
+        ...item,
+        dirty: true,
+        deleted: true
+      }
+      sync( newData );
       return newData
     })
-  }, [])
+  }, [ data, sync ])
 
   return (
     <AnimatedColorBox
@@ -101,7 +108,8 @@ export default function MainScreen( { todos, refresh, refreshing, sync } ) {
               id,
               subject: '',
               done: false,
-              dirty: true
+              dirty: true,
+              deleted: false
             },
             ...data
           ])

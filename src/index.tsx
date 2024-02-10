@@ -90,7 +90,12 @@ const App = () => {
       return;
     }
     const updatePromises = dataToSync.map( todo => {
-      if( typeof todo.id === 'string' &&  todo.id.substring(0,3) === 'new' ) {
+      if( todo.deleted ) {
+        console.log( 'Deleting', todo );
+        return authenticadedFetch( url + '/' + todo.id, {
+          method: 'DELETE'
+        }, login, pass );
+      } else if( typeof todo.id === 'string' &&  todo.id.substring(0,3) === 'new' ) {
         return authenticadedFetch( url, {
           method: 'POST',
           body: JSON.stringify( {
@@ -108,8 +113,8 @@ const App = () => {
       }
     } );
     Promise.all( updatePromises ).then( responses => {
-      console.log( 'Synced', responses );
-      loadTodos( data );
+      console.log( 'Synced', JSON.stringify(responses) );
+      //loadTodos( data );
     } );
   }
 

@@ -15,6 +15,8 @@ interface TaskItemData {
   id: string
   subject: string
   done: boolean
+  deleted: boolean
+  dirty: boolean
 }
 
 interface TaskListProps {
@@ -125,7 +127,7 @@ export default function TaskList(props: TaskListProps) {
     
     }>
       <AnimatePresence>
-        {data.map(item => (
+        {data.filter( item => ! item.deleted ).map(item => (
           <AnimatedTaskItem
             key={item.id}
             data={item}
