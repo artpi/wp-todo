@@ -1,12 +1,13 @@
 import React, { useCallback, useState } from 'react'
-import { useColorModeValue, Input, Button, Heading, Text, VStack, Avatar } from 'native-base'
+import { useColorModeValue, Input, Button, Heading, Text, VStack, Link } from 'native-base'
 import AnimatedColorBox from '../components/animated-color-box'
 import Masthead from '../components/masthead'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeSyntheticEvent, TextInputChangeEventData, ActivityIndicator, View } from 'react-native'
 import {Picker} from '@react-native-picker/picker';
-import { authenticadedFetch } from '../utils/wpapi';
-
+import { authenticadedFetch, normalizeUrl } from '../utils/wpapi';
+import { FontAwesome5, } from '@expo/vector-icons'
+import LinkButton from '../components/link-button'
 
 export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, setPass, data, setData }) {
 
@@ -17,14 +18,13 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
   function connectWP( url: string, username: string, password: string ) {
     //normalize url, add https if not present
     setConnecting( true );
-    const normalizedURL = 'http://' + url;
-
-    const siteData = fetch(`${normalizedURL}?rest_route=/`)
+    const siteData = fetch( normalizeUrl(url ) + `?rest_route=/`)
     .then((response) => response.json())
     .then( response => {
         data['site_home'] = response.home;
         data['site_icon_url'] = response.site_icon_url;
         data['site_title'] = response.name;
+        setWPURL( response.url );
         setData( data );
         return Promise.resolve( response );
     });
@@ -123,6 +123,24 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
               blurOnSubmit
               onChange={ handleChangeWPURL }
             />
+        { ! wpURL && ( 
+        <>
+        <Text margin={ '6' }>WP TODO requires a WordPress installation. You don't have a WordPress yet?</Text>
+        <LinkButton
+          backgroundColor={'#3399cd'}
+            size="md"
+            borderRadius="full"
+            marginLeft={ '6'}
+            marginRight={ '6'}
+            href="https://automattic.pxf.io/wptodo"
+            leftIcon={
+              <FontAwesome5 name="wordpress-simple" size={24} color={'white'} opacity={0.5} />
+            }
+          >
+            Get one on WordPress.com
+          </LinkButton>
+          </>) }
+        { wpURL && ( <>
         <Input
               margin={ '3'}
               placeholder="Your login"
@@ -142,20 +160,25 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
               onChange={ handleChangePass }
 
             />
-        <Text
-          alignContent={ 'center' }
-          margin={ '3' }
-        >{ err }</Text>
+          { wpURL && (
+            <Link marginLeft={ '6' } alignContent={ 'center' } href={ normalizeUrl(wpURL) + `/wp-admin/authorize-application.php?app_name=wp-todo` }>Do not use your regular password. Create a new "application" password here</Link>
+          ) }
+            <Text
+              alignContent={ 'center' }
+              margin={ '3' }
+              color={ 'red.500'}
+            >{ err }</Text>
 
-        <Button
-          colorScheme="primary"
-          margin={ '10%' }
-          onPress={ () => {
-              connectWP( wpURL, login, pass );
-          }}
-        >
-          { "Connect" }
-        </Button>
+            <Button
+              colorScheme="primary"
+              margin={ '10%' }
+              onPress={ () => {
+                  connectWP( wpURL, login, pass );
+              }}
+            >
+              { "Connect" }
+            </Button>
+          </> ) }
         </>
       ) }
 

@@ -51,7 +51,7 @@ const AboutScreen = () => {
           backgroundColor={'#3399cd'}
             size="lg"
             borderRadius="full"
-            href="https://automattic.pxf.io/q4qKMb"
+            href="https://automattic.pxf.io/wptodo"
             leftIcon={
               <FontAwesome5 name="wordpress-simple" size={24} color={'white'} opacity={0.5} />
             }

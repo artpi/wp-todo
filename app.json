@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "animated-todo",
-    "slug": "animated-todo",
+    "name": "wp-todo",
+    "slug": "wp-todo",
+    "scheme": "wp-todo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
