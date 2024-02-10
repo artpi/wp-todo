@@ -61,8 +61,8 @@ export default function MainScreen( { todos, refresh, refreshing, sync } ) {
       w="full"
     >
       <Masthead
-        title="What's up, Takuya!"
-        image={require('../assets/masthead.png')}
+        title="Lets get doin!"
+        // image={require('../assets/masthead.png')}
       >
         <NavBar />
       </Masthead>

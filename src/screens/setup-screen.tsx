@@ -92,9 +92,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
     >
       <Masthead
         title="Tell me more about your WordPress"
-        image={require('../assets/masthead.png')}
       >
-        <></>
       </Masthead>
       { connecting && (
           <View style={ { margin: '12px' } }>

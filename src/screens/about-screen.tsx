@@ -23,7 +23,7 @@ const AboutScreen = () => {
     >
       <Masthead
         title="WP TODO"
-        image={require('../assets/about-masthead.png')}
+        // image={require('../assets/about-masthead.png')}
       >
         <Navbar />
       </Masthead>

@@ -4,11 +4,11 @@ import { Box, VStack, Heading, Image } from 'native-base'
 
 interface Props {
   title: string
-  image: ImageSourcePropType
+  // image: ImageSourcePropType
   children: React.ReactNode
 }
 
-const Masthead = ({ title, image, children }: Props) => {
+const Masthead = ({ title, children }: Props) => {
   return (
     <VStack h="200px" pb={5} backgroundColor={'blue.500'}>
       {/* <Image
@@ -23,8 +23,7 @@ const Masthead = ({ title, image, children }: Props) => {
         alt="masthead image"
       /> */}
       {children}
-      <Box flex={1} />
-      <Heading color="white" p={6} size="xl">
+      <Heading color="white" p={2} size="xl" style={{justifyContent: 'center'}}>
         {title}
       </Heading>
     </VStack>
