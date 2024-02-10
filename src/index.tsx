@@ -104,11 +104,15 @@ const App = () => {
           } )
         }, login, pass );
       } else {
+        let newData = {
+          title: todo.subject,
+        };
+        if ( todo.done ) {
+          newData['status'] = 'pending';
+        } 
         return authenticadedFetch( url + '/' + todo.id, {
           method: 'POST',
-          body: JSON.stringify( {
-            title: todo.subject,
-          } )
+          body: JSON.stringify( newData )
         }, login, pass );
       }
     } );
