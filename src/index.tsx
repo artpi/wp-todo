@@ -63,7 +63,10 @@ const App = () => {
 
   function loadTodos( data ) {
     const cpt = data.post_types.find( type => type.slug === data.post_type );
-    const url = `http://${wpURL}/?rest_route=/${cpt.rest_namespace}${cpt.rest_base}`;
+    if( !cpt ) {
+      return;
+    }
+    const url = cpt._links['wp:items'][0].href;
     console.log('URL', url);
     authenticadedFetch( url, {}, login, pass ).then( response => {
       console.log( 'TODOS', response );
