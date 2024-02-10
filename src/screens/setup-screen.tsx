@@ -163,15 +163,22 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
           { wpURL && (
             <Link marginLeft={ '6' } alignContent={ 'center' } href={ normalizeUrl(wpURL) + `/wp-admin/authorize-application.php?app_name=wp-todo` }>Do not use your regular password. Create a new "application" password here</Link>
           ) }
-            <Text
+            { err && ( <Text
               alignContent={ 'center' }
               margin={ '3' }
               color={ 'red.500'}
-            >{ err }</Text>
+            >{ err }</Text> ) }
 
             <Button
-              colorScheme="primary"
+              colorScheme="secondary"
               margin={ '10%' }
+              size="md"
+              borderRadius="full"
+              marginLeft={ '6'}
+              marginRight={ '6'}
+              leftIcon={
+                <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
+              }
               onPress={ () => {
                   connectWP( wpURL, login, pass );
               }}
@@ -188,8 +195,9 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
         </Heading> }
         { data.post_types.length > 0 && (
           <>
-              <Heading p={6} size="m">Which post type holds your TODOs?</Heading>
+              <Heading p={6} size="md">Which post type holds your TODOs?</Heading>
               <Picker
+                style={{ marginLeft: '6%', marginRight: '6%' }}
                 selectedValue={data.post_type}
                 onValueChange={(itemValue, itemIndex) => {
                   setData( { ...data, post_type: itemValue } );
@@ -201,8 +209,16 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
               ) ) }
               </Picker>
               <Button
-                colorScheme="primary"
+                colorScheme="secondary"
                 margin={ '10%' }
+                size="md"
+                borderRadius="full"
+                marginLeft={ '6'}
+                marginRight={ '6'}
+                disabled={ ! data.post_types || ! data.post_type }
+                leftIcon={
+                  <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
+                }
                 onPress={ () => {
                     const newData = { ...data, connected: true };
                     setData( newData );
