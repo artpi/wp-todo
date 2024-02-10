@@ -12,7 +12,20 @@ I have been running personal automation for a while now and am constantly frustr
 - By syncing my todos with WordPress, I can implement AI capabilities that I want on the WordPress end
 - I am enamoured by the idea of WordPress being the backend for mobile development.
 
-**CLoud is just somebody else's computer. You can run your own cloud with WordPress.**
+**Cloud is just somebody else's computer. You can run your own cloud with WordPress.**
+
+## So how does this work?
+
+This will work with any site exposing application passwords to authenticate REST API.
+
+1. You select any registered Post Type to serve as your TODOs. Naturally, it makes more sense if you use a new one, but existing ones will work as well
+2. App syncs with your WordPress
+3. Completed TODOs will get "Pending" built-in post status
+4. Deleted TODOs will end up in trash
+
+If you use one of the existing post types, you might expose your entire todo list to the internet. This is not what you may want.
+
+I am working on a plugin to manage your todos properly on WordPress end, so follow me if you want to try that out.
 
 ## Screenshots 
 
