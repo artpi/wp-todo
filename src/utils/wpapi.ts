@@ -27,7 +27,7 @@ export function getURLForCPT( post_types: any, postType: string ) {
 
 
 export function getWPAdminUrlForCPT( wpURL: string, postType: string ) {
-  return wpURL + '/wp-admin/edit.php?post_type=' + postType;
+  return normalizeUrl( wpURL ) + '/wp-admin/edit.php?post_type=' + postType;
 }
 
 export function normalizeUrl( url: string ) {

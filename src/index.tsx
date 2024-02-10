@@ -59,66 +59,62 @@ const App = () => {
   useEffect(() => {
     if ( data.connected ) {
       // Gotta load those todos.
-      loadTodos( data );
+      sync( [] );
     }
   }, [data, wpURL, login, pass]);
 
-  function loadTodos( data ) {
-    setRefreshing( true );
-    const cpt = data.post_types.find( type => type.slug === data.post_type );
-    if( !cpt ) {
-      return;
-    }
-    const url = cpt._links['wp:items'][0].href;
-    console.log('URL', url);
-    authenticadedFetch( url, {}, login, pass ).then( response => {
-      console.log( 'TODOS', response );
-      setTodos( response );
-      setRefreshing( false );
-    }).catch ( err => {
-      console.log( 'ERROR', err );
-      setRefreshing( false );
-    });
-  }
-
   function sync( cachedData: any ) {
-    const dataToSync = cachedData.filter( todo => todo.dirty );
-    console.log( 'Trigggering sync', JSON.stringify(dataToSync) );
     const url = getURLForCPT( data.post_types, data.post_type );
+
     if( ! url ) {
       console.warn( 'Bailing on sync, no URL to update CPT found.');
       return;
     }
-    const updatePromises = dataToSync.map( todo => {
-      if( todo.deleted ) {
-        console.log( 'Deleting', todo );
-        return authenticadedFetch( url + '/' + todo.id, {
-          method: 'DELETE'
-        }, login, pass );
-      } else if( typeof todo.id === 'string' &&  todo.id.substring(0,3) === 'new' ) {
-        return authenticadedFetch( url, {
-          method: 'POST',
-          body: JSON.stringify( {
+    let updatePromises = [];
+    if( cachedData) {
+      console.log( 'Cached Data', JSON.stringify(cachedData) );
+      const dataToSync = cachedData.filter( todo => todo.dirty );
+      console.log( 'Trigggering sync', JSON.stringify(dataToSync) );
+  
+      updatePromises = dataToSync.map( todo => {
+        if( todo.deleted ) {
+          console.log( 'Deleting', todo );
+          return authenticadedFetch( url + '/' + todo.id, {
+            method: 'DELETE'
+          }, login, pass );
+        } else if( typeof todo.id === 'string' &&  todo.id.substring(0,3) === 'new' ) {
+          return authenticadedFetch( url, {
+            method: 'POST',
+            body: JSON.stringify( {
+              title: todo.subject,
+              status: 'publish'
+            } )
+          }, login, pass );
+        } else {
+          let newData = {
             title: todo.subject,
-            status: 'publish'
-          } )
-        }, login, pass );
-      } else {
-        let newData = {
-          title: todo.subject,
-        };
-        if ( todo.done ) {
-          newData['status'] = 'pending';
-        } 
-        return authenticadedFetch( url + '/' + todo.id, {
-          method: 'POST',
-          body: JSON.stringify( newData )
-        }, login, pass );
-      }
-    } );
+          };
+          if ( todo.done ) {
+            newData['status'] = 'pending';
+          } 
+          return authenticadedFetch( url + '/' + todo.id, {
+            method: 'POST',
+            body: JSON.stringify( newData )
+          }, login, pass );
+        }
+      } );
+    }
+    
     Promise.all( updatePromises ).then( responses => {
-      console.log( 'Synced', JSON.stringify(responses) );
-      //loadTodos( data );
+      console.log( 'Synced Data', JSON.stringify(responses) );
+      setRefreshing( true );
+      return authenticadedFetch( url, {}, login, pass ).then( response => {
+        setTodos( response );
+        setRefreshing( false );
+      }).catch ( err => {
+        console.log( 'ERROR', err );
+        setRefreshing( false );
+      });
     } );
   }
 
@@ -160,7 +156,6 @@ const App = () => {
         {(props) => (
           <MainScreen
               todos={ todos }
-              refresh={ () => loadTodos( data ) }
               refreshing={ refreshing }
               sync={ sync }
               {...props }

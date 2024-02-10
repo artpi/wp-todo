@@ -7,7 +7,7 @@ import shortid from 'shortid'
 import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
 
-export default function MainScreen( { todos, refresh, refreshing, sync } ) {
+export default function MainScreen( { todos, refreshing, sync } ) {
   const [data, setData] = useState( [] )
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
 
@@ -83,7 +83,7 @@ export default function MainScreen( { todos, refresh, refreshing, sync } ) {
         pt="20px"
       >
         <TaskList
-          refresh={refresh}
+          refresh={ () => sync( data ) }
           refreshing={ refreshing }
           data={data}
           onToggleItem={handleToggleTaskItem}
