@@ -4,15 +4,9 @@ This is a react native App that syncs with WordPress.
 
 ## Screenshots 
 
-![](./assets/doc/screen-1.png)
-
-![](./assets/doc/screen-2.png)
-
-![](./assets/doc/screen-3.png)
-
-![](./assets/doc/screen-4.png)
-
-![](./assets/doc/screen-5.png)
+| | | | | |
+|---|---|---|---|---|
+|![](./assets/doc/screen-1.png)|![](./assets/doc/screen-2.png)|![](./assets/doc/screen-3.png)|![](./assets/doc/screen-4.png)|![](./assets/doc/screen-5.png)|
 
 ## Credits
 
