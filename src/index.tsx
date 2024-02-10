@@ -140,7 +140,7 @@ const App = () => {
   return (
     <Drawer.Navigator
       initialRouteName="Main"
-      drawerContent={props => <Sidebar logOut={ logOut } data={data} {...props} />}
+      drawerContent={props => <Sidebar logOut={ logOut } data={data} wpURL = {wpURL} {...props} />}
       screenOptions={{
         headerShown: false,
         drawerType: 'back',

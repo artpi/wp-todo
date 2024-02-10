@@ -24,3 +24,8 @@ export function getURLForCPT( post_types: any, postType: string ) {
   }
   return cpt._links['wp:items'][0].href;
 }
+
+
+export function getWPAdminUrlForCPT( wpURL: string, postType: string ) {
+  return 'http://' + wpURL + '/wp-admin/edit.php?post_type=' + postType;
+}

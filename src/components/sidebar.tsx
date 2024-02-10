@@ -6,16 +6,19 @@ import {
   Avatar,
   Heading,
   IconButton,
-  useColorModeValue
+  useColorModeValue,
+  Link
 } from 'native-base'
 import { DrawerContentComponentProps } from '@react-navigation/drawer'
 import AnimatedColorBox from './animated-color-box'
 import ThemeToggle from './theme-toggle'
 import { Feather } from '@expo/vector-icons'
 import MenuButton from './menu-button'
+import * as Linking from 'expo-linking'
+import { getWPAdminUrlForCPT } from '../utils/wpapi'
 
 const Sidebar = (props: DrawerContentComponentProps) => {
-  const { state, navigation, data, logOut } = props
+  const { state, navigation, data, logOut, wpURL } = props
   const currentRoute = state.routeNames[state.index]
 console.log('DAT', data);
   const handlePressBackButton = useCallback(() => {
@@ -74,6 +77,15 @@ console.log('DAT', data);
           Tasks
         </MenuButton>
         <MenuButton
+          active={ false }
+          icon="external-link"
+          onPress={() => {
+            Linking.openURL( getWPAdminUrlForCPT( wpURL, data.post_type ) );
+          }}
+        >
+          Manage on WP
+        </MenuButton>
+        <MenuButton
           active={currentRoute === 'About'}
           onPress={handlePressMenuAbout}
           icon="info"
@@ -83,7 +95,7 @@ console.log('DAT', data);
         <MenuButton
           active={ false }
           onPress={ () => logOut()}
-          icon="info"
+          icon="log-out"
         >
           Log Out
         </MenuButton>
