@@ -7,12 +7,12 @@ import shortid from 'shortid'
 import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
 
-export default function MainScreen( { todos, refresh, refreshing } ) {
+export default function MainScreen( { todos, refresh, refreshing, sync } ) {
   const [data, setData] = useState( [] )
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
 
   useEffect(() => {
-    setData( todos.map( post => ( { id:post.id, subject: post.title.rendered, done: false } ) ) )
+    setData( todos.map( post => ( { id:post.id, subject: post.title.rendered, done: false, dirty: false } ) ) )
   }, [todos])
 
   const handleToggleTaskItem = useCallback(item => {
@@ -21,7 +21,8 @@ export default function MainScreen( { todos, refresh, refreshing } ) {
       const index = prevData.indexOf(item)
       newData[index] = {
         ...item,
-        done: !item.done
+        done: !item.done,
+        dirty: true
       }
       return newData
     })
@@ -32,14 +33,17 @@ export default function MainScreen( { todos, refresh, refreshing } ) {
       const index = prevData.indexOf(item)
       newData[index] = {
         ...item,
-        subject: newSubject
+        subject: newSubject,
+        dirty: true
       }
       return newData
     })
   }, [])
   const handleFinishEditingTaskItem = useCallback(_item => {
+    sync( data );
+
     setEditingItemId(null)
-  }, [])
+  }, [ data, sync])
   const handlePressTaskItemLabel = useCallback(item => {
     setEditingItemId(item.id)
   }, [])
@@ -91,12 +95,13 @@ export default function MainScreen( { todos, refresh, refreshing } ) {
         colorScheme={useColorModeValue('blue', 'darkBlue')}
         bg={useColorModeValue('blue.500', 'blue.400')}
         onPress={() => {
-          const id = shortid.generate()
+          const id = 'new_' + shortid.generate()
           setData([
             {
               id,
               subject: '',
-              done: false
+              done: false,
+              dirty: true
             },
             ...data
           ])

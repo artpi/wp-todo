@@ -15,4 +15,12 @@ export function authenticadedFetch( url: string, params = {}, username: string, 
       }
       return Promise.resolve( response );
     } );
+}
+
+export function getURLForCPT( post_types: any, postType: string ) {
+  const cpt = post_types.find( type => type.slug === postType );
+  if( !cpt ) {
+    return;
   }
+  return cpt._links['wp:items'][0].href;
+}

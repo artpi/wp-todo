@@ -5,10 +5,10 @@ import {
   Text,
   VStack,
   Icon,
-  Image,
+  Avatar,
   useColorModeValue
 } from 'native-base'
-import { Feather } from '@expo/vector-icons'
+import { FontAwesome5, Feather } from '@expo/vector-icons'
 import AnimatedColorBox from '../components/animated-color-box'
 import Navbar from '../components/navbar'
 import Masthead from '../components/masthead'
@@ -22,7 +22,7 @@ const AboutScreen = () => {
       w="full"
     >
       <Masthead
-        title="About this app"
+        title="WP TODO"
         image={require('../assets/about-masthead.png')}
       >
         <Navbar />
@@ -36,56 +36,49 @@ const AboutScreen = () => {
         p={4}
       >
         <VStack flex={1} space={4}>
-          <Box alignItems="center">
-            <Image
-              source={require('../assets/takuya.jpg')}
-              borderRadius="full"
-              resizeMode="cover"
-              w={120}
-              h={120}
-              alt="author"
-            />
-          </Box>
+
           <Text fontSize="md" w="full">
-            This is a React Native tutorial built in the YouTube channel called
-            DevAsLife.
+            This is a TODO app that saves your tasks to WordPress - the most portable and extensible online software.
           </Text>
+          <Text fontSize="md" w="full">
+            You will be able to manage your TODOs in WP-Admin or export to another app.
+          </Text>
+          <Text fontSize="md" w="full">
+            Don't have a WordPress yet?
+          </Text>
+          
           <LinkButton
-            colorScheme="red"
+          backgroundColor={'#3399cd'}
             size="lg"
             borderRadius="full"
-            href="https://www.youtube.com/devaslife"
+            href="https://automattic.pxf.io/q4qKMb"
             leftIcon={
-              <Icon as={Feather} name="youtube" size="sm" opacity={0.5} />
+              <FontAwesome5 name="wordpress-simple" size={24} color={'white'} opacity={0.5} />
             }
           >
-            Go to YouTube channel
+            Get one on WordPress.com
           </LinkButton>
+
+          <Text fontSize="md" w="full">
+            Written by Artpi.
+          </Text>
           <LinkButton
             colorScheme={useColorModeValue('blue', 'darkBlue')}
             size="lg"
             borderRadius="full"
-            href="https://twitter.com/inkdrop_app"
+            href="https://piszek.com"
             leftIcon={
-              <Icon as={Feather} name="twitter" size="sm" opacity={0.5} />
+              <Avatar
+                source={{
+                  uri: 'https://gravatar.com/avatar/01f3a3eaa8bb103655920fd3eb9aa0c3ba5f093fb189994a1d1cf71e2c436bad?s=48'
+                }}
+                size="xs"
+                borderColor="primary.500"
+                borderWidth={1}
+                />
             }
           >
-            @inkdrop_app
-          </LinkButton>
-          <Text fontSize="md" w="full">
-            Are you looking for a Markdown note-taking app? Check out my app
-            called Inkdrop!
-          </Text>
-          <LinkButton
-            colorScheme="purple"
-            size="lg"
-            borderRadius="full"
-            href="https://www.inkdrop.app/"
-            leftIcon={
-              <Icon as={Feather} name="external-link" size="sm" opacity={0.5} />
-            }
-          >
-            https://www.inkdrop.app/
+            Check out my blog and other projects
           </LinkButton>
         </VStack>
       </ScrollView>

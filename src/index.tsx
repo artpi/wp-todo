@@ -6,7 +6,7 @@ import MainScreen from './screens/main-screen'
 import AboutScreen from './screens/about-screen'
 import Sidebar from './components/sidebar'
 import SetupScreen from './screens/setup-screen'
-import { authenticadedFetch } from './utils/wpapi';
+import { authenticadedFetch, getURLForCPT } from './utils/wpapi';
 import { err } from 'react-native-svg';
 
 
@@ -81,6 +81,38 @@ const App = () => {
     });
   }
 
+  function sync( cachedData: any ) {
+    const dataToSync = cachedData.filter( todo => todo.dirty );
+    console.log( 'Trigggering sync', JSON.stringify(dataToSync) );
+    const url = getURLForCPT( data.post_types, data.post_type );
+    if( ! url ) {
+      console.warn( 'Bailing on sync, no URL to update CPT found.');
+      return;
+    }
+    const updatePromises = dataToSync.map( todo => {
+      if( typeof todo.id === 'string' &&  todo.id.substring(0,3) === 'new' ) {
+        return authenticadedFetch( url, {
+          method: 'POST',
+          body: JSON.stringify( {
+            title: todo.subject,
+            status: 'publish'
+          } )
+        }, login, pass );
+      } else {
+        return authenticadedFetch( url + '/' + todo.id, {
+          method: 'POST',
+          body: JSON.stringify( {
+            title: todo.subject,
+          } )
+        }, login, pass );
+      }
+    } );
+    Promise.all( updatePromises ).then( responses => {
+      console.log( 'Synced', responses );
+      loadTodos( data );
+    } );
+  }
+
   function logOut() {
     setData( initialData );
     setWPURL('');
@@ -121,6 +153,7 @@ const App = () => {
               todos={ todos }
               refresh={ () => loadTodos( data ) }
               refreshing={ refreshing }
+              sync={ sync }
               {...props }
           />
       )}
