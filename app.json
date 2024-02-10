@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "wp-todo",
+    "name": "WP TODO",
     "slug": "wp-todo",
     "scheme": "wp-todo",
     "version": "1.0.0",
@@ -18,7 +18,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.piszek.wptodo"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,6 +29,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "04e9cc46-63f9-4f6f-8438-84ade42bbbdf"
+      }
     }
   }
 }
