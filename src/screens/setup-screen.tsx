@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { Platform } from 'react-native'
+import { Platform, KeyboardAvoidingView } from 'react-native'
 import { useColorModeValue, Input, Button, Heading, Text, VStack, Link } from 'native-base'
 import AnimatedColorBox from '../components/animated-color-box'
 import Masthead from '../components/masthead'
@@ -132,6 +132,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
         image={require('../assets/masthead-start.png')}
       >
       </Masthead>
+      
       <VStack
         flex={1}
         space={1}
@@ -147,7 +148,9 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
             <ActivityIndicator size="large"  />
           </View>
       ) }
-
+      <KeyboardAvoidingView
+        behavior={'position'}
+      >
       { ! connecting && ! data.username && (
         <>
         <Input
@@ -191,6 +194,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
         <Input
               margin={ '3'}
               placeholder="Your application password"
+              type='password'
               value={ pass }
               variant="outline"
               size="xl"
@@ -225,7 +229,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
           </> ) }
         </>
       ) }
-
+      </KeyboardAvoidingView>
       { ! connecting && ( <>
         { data.connected && data.site_title && <Heading p={6} size="m">
           { "Connected to " + data.site_title }

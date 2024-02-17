@@ -74,7 +74,9 @@ const App = () => {
 
   useEffect(() => {
     console.log( 'Saving todos to local storage', todos );
-    AsyncStorage.setItem('todos', JSON.stringify( todos) );
+    if( todos.length > 0 ) {
+      AsyncStorage.setItem('todos', JSON.stringify( todos ) );
+    }
   }, [todos]);
 
 

@@ -82,7 +82,7 @@ const Sidebar = (props: DrawerContentComponentProps) => {
         >
           All Tasks
         </MenuButton>
-        { data.taxonomy_terms.length > 0 && data.taxonomy_terms.map( taxonomy => (
+        { data.taxonomy_terms && data.taxonomy_terms.length > 0 && data.taxonomy_terms.map( taxonomy => (
             <MenuButton
               active={ state.routes[state.index].params && state.routes[state.index].params?.term === taxonomy.slug}
               onPress={() => { navigation.navigate('Main', { term: taxonomy.slug }) }}
