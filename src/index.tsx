@@ -94,8 +94,7 @@ const App = () => {
       console.log( 'Trigggering sync', JSON.stringify(dataToSync) );
   
       updatePromises = dataToSync.map( todo => {
-        if( todo.deleted ) {
-          console.log( 'Deleting', todo );
+        if( todo.deleted || todo.done ) {
           return authenticadedFetch( url + '/' + todo.id, {
             method: 'DELETE'
           }, login, pass );
@@ -111,9 +110,6 @@ const App = () => {
           let newData = {
             title: todo.subject,
           };
-          if ( todo.done ) {
-            newData['status'] = 'pending';
-          } 
           return authenticadedFetch( url + '/' + todo.id, {
             method: 'POST',
             body: JSON.stringify( newData )
