@@ -104,7 +104,7 @@ const App = () => {
             method: 'POST',
             body: JSON.stringify( {
               title: todo.subject,
-              status: 'publish'
+              status: 'private'
             } )
           }, login, pass );
         } else {
@@ -125,11 +125,13 @@ const App = () => {
     Promise.all( updatePromises ).then( responses => {
       console.log( 'Synced Data', JSON.stringify(responses) );
       setRefreshing( true );
-      return authenticadedFetch( url, {}, login, pass ).then( response => {
-        console.log('DEB', data.taxonomy, data.taxonomies , response);
+      const modifiedURL = new URL( url );
+      modifiedURL.searchParams.set( 'status', 'private' );
+      modifiedURL.searchParams.set( 'context', 'edit' );
+      return authenticadedFetch( modifiedURL.toString() , {}, login, pass ).then( response => {
         setTodos( response.map( post => ( {
           id:post.id,
-          subject: post.title.rendered,
+          subject: post.title.raw,
           done: false,
           dirty: false,
           terms: data.taxonomy ? post[ data.taxonomies[ data.taxonomy ].rest_base ] : []
