@@ -93,12 +93,11 @@ const TaskItem = (props: Props) => {
         bg={useColorModeValue('warmGray.50', 'primary.900')}
       >
         <Box width={30} height={30} mr={2}>
-          <Pressable onPress={onToggleCheckbox}>
-            <Checkbox
-              size="lg"
-              value={isDone}
-            />
-          </Pressable>
+          <Checkbox
+            size="lg"
+            value={isDone}
+            onChange={ onToggleCheckbox }
+          />
         </Box>
         {isEditing ? (
           <Input
