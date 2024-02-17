@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react'
+import { Platform } from 'react-native'
 import { useColorModeValue, Input, Button, Heading, Text, VStack, Link } from 'native-base'
 import AnimatedColorBox from '../components/animated-color-box'
 import Masthead from '../components/masthead'
@@ -12,8 +13,25 @@ import LinkButton from '../components/link-button'
 export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, setPass, data, setData }) {
 
   const [connecting, setConnecting] = useState(false);
-  const [err, setErr] = useState('')
+  const [err, setErr] = useState('');
 
+  const pickerStyle = {
+    marginLeft: '6%',
+    marginRight: '6%',
+  };
+
+  if( Platform.OS === 'ios' ) {
+    pickerStyle['marginTop'] = -48;
+    pickerStyle['marginBottom'] = -48;
+  }
+
+  function loadTaxonomyTerms( taxonomy ) {
+    const url = data.taxonomies[taxonomy]._links['wp:items'][0].href;
+    console.log( 'LOADING TAXONOMY TERMS', url );
+    authenticadedFetch( url, {}, login, pass ).then( response => {
+      setData( oldData => ( { ...oldData, taxonomy_terms: response } ) );
+    });
+  }
 
   function connectWP( url: string, username: string, password: string ) {
     //normalize url, add https if not present
@@ -206,7 +224,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
           <>
               <Heading p={4} size="md" style={{marginBottom: 0}}>Which post type holds your TODOs?</Heading>
               <Picker
-                style={{ marginLeft: '6%', marginRight: '6%', marginTop: -48, marginBottom: -48}}
+                style={ pickerStyle }
                 itemStyle={{ padding:0, margin:0}}
                 selectedValue={data.post_type}
                 onValueChange={(itemValue, itemIndex) => {
@@ -227,11 +245,12 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                 <>
                     <Heading p={4} size="md">How do you seperate your TODOs?</Heading>
                     <Picker
-                      style={{ marginLeft: '6%', marginRight: '6%', marginTop: -48, marginBottom: -48}}
+                      style={ pickerStyle }
                       itemStyle={{ padding:0, margin:0}}
                       selectedValue={data.taxonomy}
                       onValueChange={(itemValue, itemIndex) => {
-                        setData( { ...data, taxonomy: itemValue } );
+                        setData( oldData => ( { ...oldData, taxonomy: itemValue } ) );
+                        loadTaxonomyTerms( itemValue );
                       } }
                     >
                     <Picker.Item key='' label="Do not separate my todos" value='' />
@@ -249,7 +268,11 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                 borderRadius="full"
                 marginLeft={ '6'}
                 marginRight={ '6'}
-                disabled={ ! data.post_types || ! data.post_type }
+                disabled={ (
+                  ! data.post_types ||
+                  ! data.post_type || (
+                    data.taxonomy.length > 0 && ! data.taxonomy_terms
+                  ) ) }
                 leftIcon={
                   <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
                 }

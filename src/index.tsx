@@ -22,6 +22,7 @@ const initialData = {
   taxonomies: {},
   post_type: '',
   taxonomy: '',
+  taxonomy_terms: {},
   username: '',
   gravatar: '',
 }
