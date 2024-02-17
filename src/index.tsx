@@ -84,7 +84,7 @@ const App = () => {
     let updatePromises = [];
     if( cachedData) {
       console.log( 'Cached Data', JSON.stringify(cachedData) );
-      const dataToSync = cachedData.filter( todo => todo.dirty );
+      const dataToSync = cachedData.filter( todo => todo.dirty ).filter( todo => todo.subject.length > 0 );
       console.log( 'Trigggering sync', JSON.stringify(dataToSync) );
   
       updatePromises = dataToSync.map( todo => {
