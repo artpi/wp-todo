@@ -28,9 +28,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
   function loadTaxonomyTerms( taxonomy ) {
     const url = data.taxonomies[taxonomy]._links['wp:items'][0].href;
     console.log( 'LOADING TAXONOMY TERMS', url );
-    authenticadedFetch( url, {}, login, pass ).then( response => {
-      setData( oldData => ( { ...oldData, taxonomy_terms: response } ) );
-    });
+    return authenticadedFetch( url, {}, login, pass );
   }
 
   function connectWP( url: string, username: string, password: string ) {
@@ -83,8 +81,20 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
     .then( response => {
         console.log( 'POST TYPES', JSON.stringify( Object.values( response[0] ) ));
         console.log( 'POST TAXONMIES', JSON.stringify( Object.values( response[1] ) ) );
-        setData( { ...data, post_types: Object.values( response[0] ), taxonomies: response[1] } );
-        setConnecting( false );
+        let newData ={ post_types: Object.values( response[0] ), taxonomies: response[1] };
+        // Personal OS plugin detected
+        if ( response[0]['todo'] && response[1]['todo_category'] ) {
+          newData['post_type'] = 'todo';
+          newData['taxonomy'] = 'todo_category';
+          console.log( 'Gonna load taxonomy terms', newData );
+        }
+        return Promise.resolve( newData );
+        
+    } )
+    .then( ( newData ) => {
+      console.log( 'NEW DATA 2', newData );
+      setData( oldData => ( { ...oldData, ...newData } ) );
+      setConnecting( false );
     } )
     .catch( error => {
       setErr( error.message );
@@ -250,7 +260,6 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                       selectedValue={data.taxonomy}
                       onValueChange={(itemValue, itemIndex) => {
                         setData( oldData => ( { ...oldData, taxonomy: itemValue } ) );
-                        loadTaxonomyTerms( itemValue );
                       } }
                     >
                     <Picker.Item key='' label="Do not separate my todos" value='' />
@@ -277,9 +286,11 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                   <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
                 }
                 onPress={ () => {
-                    const newData = { ...data, connected: true  };
-                    setData( newData );
-                    AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+                    loadTaxonomyTerms( data.taxonomy ).then( response => {
+                      const newData = { ...data, connected: true,  taxonomy_terms: response };
+                      setData( newData );
+                      AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+                    });
                 }}
                 >{ "Continue" }</Button>
           </>

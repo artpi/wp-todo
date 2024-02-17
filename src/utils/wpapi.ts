@@ -11,6 +11,7 @@ export function authenticadedFetch( url: string, params = {}, username: string, 
     }
     return fetch( url, args ).then((response) => response.json()).then( response => {
       if ( response.code ) {
+        console.warn( 'API err', response );
         return Promise.reject( response );
       }
       return Promise.resolve( response );
