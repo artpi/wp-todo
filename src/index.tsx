@@ -19,7 +19,9 @@ const initialData = {
   site_home: '',
   site_icon_url: '',
   post_types: [],
+  taxonomies: {},
   post_type: '',
+  taxonomy: '',
   username: '',
   gravatar: '',
 }

@@ -48,15 +48,24 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
 
         return Promise.resolve( siteData );
     } )
-    .then( (site) => authenticadedFetch(
-      site.routes['/wp/v2/types']._links.self[0].href,
-      {},
-      username,
-      password
-    ) )
+    .then( (site) => Promise.all( [
+      authenticadedFetch(
+        site.routes['/wp/v2/types']._links.self[0].href,
+        {},
+        username,
+        password
+      ),
+      authenticadedFetch(
+        site.routes['/wp/v2/taxonomies']._links.self[0].href,
+        {},
+        username,
+        password
+      ),
+    ] ) )
     .then( response => {
-        console.log( 'POST TYPES', JSON.stringify( Object.values( response ) ));
-        setData( { ...data, post_types: Object.values( response ) } );
+        console.log( 'POST TYPES', JSON.stringify( Object.values( response[0] ) ));
+        console.log( 'POST TAXONMIES', JSON.stringify( Object.values( response[1] ) ) );
+        setData( { ...data, post_types: Object.values( response[0] ), taxonomies: response[1] } );
         setConnecting( false );
     } )
     .catch( error => {
@@ -208,6 +217,29 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                   <Picker.Item key={ post_type.slug } label={ post_type.name + ' (' + post_type.slug + ')' } value={ post_type.slug } />
               ) ) }
               </Picker>
+              { (
+                data.post_type.length > 0 &&
+                data.taxonomies &&
+                data.post_types.find( type => type.slug === data.post_type ) &&
+                data.post_types.find( type => type.slug === data.post_type ).taxonomies.length > 0
+                ) && (
+                <>
+                    <Heading p={6} size="md">How do you seperate your TODOs?</Heading>
+                    <Picker
+                      style={{ marginLeft: '6%', marginRight: '6%' }}
+                      selectedValue={data.taxonomy}
+                      onValueChange={(itemValue, itemIndex) => {
+                        setData( { ...data, taxonomy: itemValue } );
+                      } }
+                    >
+                    <Picker.Item key='' label="Do not separate my todos" value='' />
+                    { data.post_types.find( type => type.slug === data.post_type ).taxonomies.map( ( taxonomy_slug: any ) => {
+                        const taxonomy = data.taxonomies[taxonomy_slug];
+                        return ( <Picker.Item key={ taxonomy.slug } label={ taxonomy.name + ' (' + taxonomy.slug + ')' } value={ taxonomy.slug } /> );
+                    } ) }
+                    </Picker>
+                </>
+              ) }
               <Button
                 colorScheme="secondary"
                 margin={ '10%' }
