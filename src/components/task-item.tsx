@@ -11,6 +11,7 @@ import {
   useToken
 } from 'native-base'
 import AnimatedCheckbox from 'react-native-checkbox-reanimated'
+import Checkbox from 'expo-checkbox';
 import AnimatedTaskLabel from './animated-task-label'
 import SwipableView from './swipable-view'
 import { Feather } from '@expo/vector-icons'
@@ -92,11 +93,10 @@ const TaskItem = (props: Props) => {
       >
         <Box width={30} height={30} mr={2}>
           <Pressable onPress={onToggleCheckbox}>
-            <AnimatedCheckbox
-              highlightColor={highlightColor}
-              checkmarkColor={checkmarkColor}
-              boxOutlineColor={boxStroke}
-              checked={isDone}
+            <Checkbox
+              color={highlightColor}
+              style={{ width: 26, height: 26, margin: 2}}
+              value={isDone}
             />
           </Pressable>
         </Box>
