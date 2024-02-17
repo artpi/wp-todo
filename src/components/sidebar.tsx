@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react'
 import {
+  Box,
   HStack,
   VStack,
   Center,
@@ -7,7 +8,8 @@ import {
   Heading,
   IconButton,
   useColorModeValue,
-  Link
+  Link,
+  Badge
 } from 'native-base'
 import { DrawerContentComponentProps } from '@react-navigation/drawer'
 import AnimatedColorBox from './animated-color-box'
@@ -18,9 +20,9 @@ import * as Linking from 'expo-linking'
 import { getWPAdminUrlForCPT } from '../utils/wpapi'
 
 const Sidebar = (props: DrawerContentComponentProps) => {
-  const { state, navigation, data, logOut, wpURL } = props
+  const { state, navigation, data, logOut, wpURL, todos } = props;
   const currentRoute = state.routeNames[state.index]
-console.log('DAT', data);
+
   const handlePressBackButton = useCallback(() => {
     navigation.closeDrawer()
   }, [navigation])
@@ -70,12 +72,31 @@ console.log('DAT', data);
           { data.site_title }
         </Heading>
         <MenuButton
-          active={currentRoute === 'Main'}
+          active={currentRoute === 'Main' && ! state.routes[state.index].params }
           onPress={handlePressMenuMain}
           icon="inbox"
+          endIcon={<Badge
+            colorScheme="default" rounded="full"  variant="solid" alignSelf="flex-end" >
+            { todos.length }
+          </Badge>}
         >
-          Tasks
+          All Tasks
         </MenuButton>
+        { data.taxonomy_terms.length > 0 && data.taxonomy_terms.map( taxonomy => (
+            <MenuButton
+              active={ state.routes[state.index].params && state.routes[state.index].params?.term === taxonomy.slug}
+              onPress={() => { navigation.navigate('Main', { term: taxonomy.slug }) }}
+              icon="check-circle"
+              key={taxonomy.slug}
+              justifyContent={'space-between'}
+              endIcon={<Badge
+                colorScheme="default" rounded="full"  variant="solid" alignSelf="flex-end" >
+                { todos.filter( t => t.terms.indexOf( taxonomy.id ) !== -1 ).length }
+              </Badge>}
+            >
+              { taxonomy.name }
+            </MenuButton>
+        ) ) }
         <MenuButton
           active={ false }
           icon="external-link"

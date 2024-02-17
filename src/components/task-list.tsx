@@ -17,6 +17,7 @@ interface TaskItemData {
   done: boolean
   deleted: boolean
   dirty: boolean
+  terms: Array<number>
 }
 
 interface TaskListProps {
@@ -107,6 +108,7 @@ export default function TaskList(props: TaskListProps) {
   const {
     refresh,
     data,
+    filter,
     refreshing,
     editingItemId,
     onToggleItem,
@@ -127,7 +129,7 @@ export default function TaskList(props: TaskListProps) {
     
     }>
       <AnimatePresence>
-        {data.filter( item => ! item.deleted ).map(item => (
+        {data.filter( item => ! item.deleted ).filter( item => ( ! filter || ( item.terms.indexOf( filter ) !== -1 ) ) ).map(item => (
           <AnimatedTaskItem
             key={item.id}
             data={item}

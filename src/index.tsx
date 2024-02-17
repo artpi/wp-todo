@@ -27,14 +27,14 @@ const initialData = {
   gravatar: '',
 }
 
-const App = () => {
+const App = ( props ) => {
   const [data, setData] = useState(initialData)
   const [todos, setTodos] = useState([])
   const [wpURL, setWPURL] = useState('')
   const [login, setLogin] = useState('')
   const [ refreshing, setRefreshing ] = useState( false )
   const [pass, setPass] = useState('')
-
+console.log('AP PROPS', props);
   useEffect(() => {
     AsyncStorage.getItem('wpurl').then( url => {
         if (url) {
@@ -128,7 +128,8 @@ const App = () => {
           id:post.id,
           subject: post.title.rendered,
           done: false,
-          dirty: false
+          dirty: false,
+          terms: data.taxonomy ? post[ data.taxonomy ] : []
         } ) ) );
         setRefreshing( false );
       }).catch ( err => {
@@ -165,7 +166,7 @@ const App = () => {
   return (
     <Drawer.Navigator
       initialRouteName="Main"
-      drawerContent={props => <Sidebar logOut={ logOut } data={data} wpURL = {wpURL} {...props} />}
+      drawerContent={props => <Sidebar logOut={ logOut } data={data} todos={ todos } wpURL = {wpURL} {...props} />}
       screenOptions={{
         headerShown: false,
         drawerType: 'back',
@@ -175,6 +176,7 @@ const App = () => {
       <Drawer.Screen name="Main">
         {(props) => (
           <MainScreen
+              data={ data }
               todos={ todos }
               setTodos={ setTodos }
               refreshing={ refreshing }

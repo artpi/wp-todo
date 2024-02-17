@@ -7,9 +7,16 @@ import shortid from 'shortid'
 import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
 
-export default function MainScreen( { todos, setTodos, refreshing, sync } ) {
+export default function MainScreen( { todos, data, setTodos, refreshing, sync, route } ) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
-
+  console.log(data.taxonomy_terms);
+  let title = 'All todos';
+  let filter = 0;
+  if( route.params?.term  && data && data.taxonomy_terms ) {
+    const term = data.taxonomy_terms.find( t => t.slug === route.params.term );
+    title = term.name;
+    filter = term.id;
+  }
 
   const handleToggleTaskItem = useCallback(item => {
     setTodos(prevData => {
@@ -64,7 +71,7 @@ export default function MainScreen( { todos, setTodos, refreshing, sync } ) {
       w="full"
     >
       <Masthead
-        title="Lets get doin!"
+        title= { title }
         image={require('../assets/masthead-main.png')}
       >
         <NavBar />
@@ -80,6 +87,7 @@ export default function MainScreen( { todos, setTodos, refreshing, sync } ) {
       >
         <TaskList
           refresh={ () => sync( todos ) }
+          filter={ filter }
           refreshing={ refreshing }
           data={todos}
           onToggleItem={handleToggleTaskItem}
