@@ -6,6 +6,8 @@ import TaskList from '../components/task-list'
 import shortid from 'shortid'
 import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
+import { Linking } from 'react-native'
+import { getWPAdminUrlForPost } from '../utils/wpapi'
 
 export default function MainScreen( { todos, data, setTodos, refreshing, sync, route } ) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
@@ -51,18 +53,8 @@ export default function MainScreen( { todos, data, setTodos, refreshing, sync, r
     setEditingItemId(item.id)
   }, [])
   const handleRemoveItem = useCallback(item => {
-    setTodos(prevData => {
-      const newData = [...prevData]
-      const index = prevData.indexOf(item)
-      newData[index] = {
-        ...item,
-        dirty: true,
-        deleted: true
-      }
-      sync( newData );
-      return newData
-    })
-  }, [ todos, sync ])
+    Linking.openURL( getWPAdminUrlForPost( data, item.id ) );
+  }, [])
 
   return (
     <AnimatedColorBox

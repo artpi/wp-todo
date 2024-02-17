@@ -26,6 +26,9 @@ export function getURLForCPT( post_types: any, postType: string ) {
   return cpt._links['wp:items'][0].href;
 }
 
+export function getWPAdminUrlForPost( data, postId ) {
+  return data.site_home + '/wp-admin/post.php?post=' + postId + '&action=edit';
+}
 
 export function getWPAdminUrlForCPT( wpURL: string, postType: string ) {
   return normalizeUrl( wpURL ) + '/wp-admin/edit.php?post_type=' + postType;

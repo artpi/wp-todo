@@ -76,12 +76,12 @@ const TaskItem = (props: Props) => {
         <Box
           w="full"
           h="full"
-          bg="red.500"
+          bg="green.500"
           alignItems="flex-end"
           justifyContent="center"
           pr={4}
         >
-          <Icon color="white" as={<Feather name="trash-2" />} size="sm" />
+          <Icon color="white" as={<Feather name="external-link" />} size="sm" />
         </Box>
       }
     >
