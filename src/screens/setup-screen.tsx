@@ -226,7 +226,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
         </>
       ) }
 
-      <>
+      { ! connecting && ( <>
         { data.connected && data.site_title && <Heading p={6} size="m">
           { "Connected to " + data.site_title }
         </Heading> }
@@ -286,8 +286,10 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                   <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
                 }
                 onPress={ () => {
+                    setConnecting( true );
                     loadTaxonomyTerms( data.taxonomy ).then( response => {
                       const newData = { ...data, connected: true,  taxonomy_terms: response };
+                      setConnecting( false );
                       setData( newData );
                       AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
                     });
@@ -295,7 +297,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                 >{ "Continue" }</Button>
           </>
         ) }
-      </>
+      </> ) }
       </VStack>
     </AnimatedColorBox>
   )
