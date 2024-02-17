@@ -54,6 +54,12 @@ const App = () => {
           console.log('READING CONFIG: ', read);
       }
     } );
+    AsyncStorage.getItem('todos').then( read => {
+      if (read) {
+          setTodos( JSON.parse( read ) );
+          console.log('READING TODOS: ', read);
+      }
+    } );
   }, []);
 
   useEffect(() => {
@@ -62,6 +68,11 @@ const App = () => {
       sync( [] );
     }
   }, [data, wpURL, login, pass]);
+
+  useEffect(() => {
+    AsyncStorage.setItem('todos', JSON.stringify( todos) );
+  }, [todos]);
+
 
   function sync( cachedData: any ) {
     const url = getURLForCPT( data.post_types, data.post_type );
@@ -109,7 +120,12 @@ const App = () => {
       console.log( 'Synced Data', JSON.stringify(responses) );
       setRefreshing( true );
       return authenticadedFetch( url, {}, login, pass ).then( response => {
-        setTodos( response );
+        setTodos( response.map( post => ( {
+          id:post.id,
+          subject: post.title.rendered,
+          done: false,
+          dirty: false
+        } ) ) );
         setRefreshing( false );
       }).catch ( err => {
         console.log( 'ERROR', err );
@@ -156,6 +172,7 @@ const App = () => {
         {(props) => (
           <MainScreen
               todos={ todos }
+              setTodos={ setTodos }
               refreshing={ refreshing }
               sync={ sync }
               {...props }

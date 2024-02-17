@@ -7,16 +7,12 @@ import shortid from 'shortid'
 import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
 
-export default function MainScreen( { todos, refreshing, sync } ) {
-  const [data, setData] = useState( [] )
+export default function MainScreen( { todos, setTodos, refreshing, sync } ) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
 
-  useEffect(() => {
-    setData( todos.map( post => ( { id:post.id, subject: post.title.rendered, done: false, dirty: false } ) ) )
-  }, [todos])
 
   const handleToggleTaskItem = useCallback(item => {
-    setData(prevData => {
+    setTodos(prevData => {
       const newData = [...prevData]
       const index = prevData.indexOf(item)
       newData[index] = {
@@ -28,7 +24,7 @@ export default function MainScreen( { todos, refreshing, sync } ) {
     })
   }, [])
   const handleChangeTaskItemSubject = useCallback((item, newSubject) => {
-    setData(prevData => {
+    setTodos(prevData => {
       const newData = [...prevData]
       const index = prevData.indexOf(item)
       newData[index] = {
@@ -40,15 +36,15 @@ export default function MainScreen( { todos, refreshing, sync } ) {
     })
   }, [])
   const handleFinishEditingTaskItem = useCallback(_item => {
-    sync( data );
+    sync( todos );
 
     setEditingItemId(null)
-  }, [ data, sync])
+  }, [ todos, sync])
   const handlePressTaskItemLabel = useCallback(item => {
     setEditingItemId(item.id)
   }, [])
   const handleRemoveItem = useCallback(item => {
-    setData(prevData => {
+    setTodos(prevData => {
       const newData = [...prevData]
       const index = prevData.indexOf(item)
       newData[index] = {
@@ -59,7 +55,7 @@ export default function MainScreen( { todos, refreshing, sync } ) {
       sync( newData );
       return newData
     })
-  }, [ data, sync ])
+  }, [ todos, sync ])
 
   return (
     <AnimatedColorBox
@@ -83,9 +79,9 @@ export default function MainScreen( { todos, refreshing, sync } ) {
         pt="20px"
       >
         <TaskList
-          refresh={ () => sync( data ) }
+          refresh={ () => sync( todos ) }
           refreshing={ refreshing }
-          data={data}
+          data={todos}
           onToggleItem={handleToggleTaskItem}
           onChangeSubject={handleChangeTaskItemSubject}
           onFinishEditing={handleFinishEditingTaskItem}
@@ -103,7 +99,7 @@ export default function MainScreen( { todos, refreshing, sync } ) {
         bg={useColorModeValue('blue.500', 'blue.400')}
         onPress={() => {
           const id = 'new_' + shortid.generate()
-          setData([
+          setTodos([
             {
               id,
               subject: '',
@@ -111,7 +107,7 @@ export default function MainScreen( { todos, refreshing, sync } ) {
               dirty: true,
               deleted: false
             },
-            ...data
+            ...todos
           ])
           setEditingItemId(id)
         }}
