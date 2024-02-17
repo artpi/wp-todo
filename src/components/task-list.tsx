@@ -129,7 +129,7 @@ export default function TaskList(props: TaskListProps) {
     
     }>
       <AnimatePresence>
-        {data.filter( item => ! item.deleted ).filter( item => ( ! filter || ( item.terms.indexOf( filter ) !== -1 ) ) ).map(item => (
+        {data.filter( item => ! item.deleted ).filter( item => ( ! filter || ! item.terms || ( item.terms.indexOf( filter ) !== -1 ) ) ).map(item => (
           <AnimatedTaskItem
             key={item.id}
             data={item}

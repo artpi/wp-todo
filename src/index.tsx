@@ -27,14 +27,14 @@ const initialData = {
   gravatar: '',
 }
 
-const App = ( props ) => {
+const App = () => {
   const [data, setData] = useState(initialData)
   const [todos, setTodos] = useState([])
   const [wpURL, setWPURL] = useState('')
   const [login, setLogin] = useState('')
   const [ refreshing, setRefreshing ] = useState( false )
   const [pass, setPass] = useState('')
-console.log('AP PROPS', props);
+
   useEffect(() => {
     AsyncStorage.getItem('wpurl').then( url => {
         if (url) {
@@ -124,12 +124,13 @@ console.log('AP PROPS', props);
       console.log( 'Synced Data', JSON.stringify(responses) );
       setRefreshing( true );
       return authenticadedFetch( url, {}, login, pass ).then( response => {
+        console.log('DEB', data.taxonomy, data.taxonomies , response);
         setTodos( response.map( post => ( {
           id:post.id,
           subject: post.title.rendered,
           done: false,
           dirty: false,
-          terms: data.taxonomy ? post[ data.taxonomy ] : []
+          terms: data.taxonomy ? post[ data.taxonomies[ data.taxonomy ].rest_base ] : []
         } ) ) );
         setRefreshing( false );
       }).catch ( err => {

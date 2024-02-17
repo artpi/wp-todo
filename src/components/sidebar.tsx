@@ -89,10 +89,10 @@ const Sidebar = (props: DrawerContentComponentProps) => {
               icon="check-circle"
               key={taxonomy.slug}
               justifyContent={'space-between'}
-              endIcon={<Badge
+              endIcon={ ( <Badge
                 colorScheme="default" rounded="full"  variant="solid" alignSelf="flex-end" >
-                { todos.filter( t => t.terms.indexOf( taxonomy.id ) !== -1 ).length }
-              </Badge>}
+                { todos.filter( t => t.terms ? ( t.terms.indexOf( taxonomy.id ) !== -1 ) : [] ).length }
+              </Badge> )}
             >
               { taxonomy.name }
             </MenuButton>
