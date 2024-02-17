@@ -204,9 +204,10 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
         </Heading> }
         { data.post_types.length > 0 && (
           <>
-              <Heading p={6} size="md">Which post type holds your TODOs?</Heading>
+              <Heading p={4} size="md" style={{marginBottom: 0}}>Which post type holds your TODOs?</Heading>
               <Picker
-                style={{ marginLeft: '6%', marginRight: '6%' }}
+                style={{ marginLeft: '6%', marginRight: '6%', marginTop: -48, marginBottom: -48}}
+                itemStyle={{ padding:0, margin:0}}
                 selectedValue={data.post_type}
                 onValueChange={(itemValue, itemIndex) => {
                   setData( { ...data, post_type: itemValue } );
@@ -224,9 +225,10 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                 data.post_types.find( type => type.slug === data.post_type ).taxonomies.length > 0
                 ) && (
                 <>
-                    <Heading p={6} size="md">How do you seperate your TODOs?</Heading>
+                    <Heading p={4} size="md">How do you seperate your TODOs?</Heading>
                     <Picker
-                      style={{ marginLeft: '6%', marginRight: '6%' }}
+                      style={{ marginLeft: '6%', marginRight: '6%', marginTop: -48, marginBottom: -48}}
+                      itemStyle={{ padding:0, margin:0}}
                       selectedValue={data.taxonomy}
                       onValueChange={(itemValue, itemIndex) => {
                         setData( { ...data, taxonomy: itemValue } );
@@ -252,7 +254,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                   <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
                 }
                 onPress={ () => {
-                    const newData = { ...data, connected: true };
+                    const newData = { ...data, connected: true  };
                     setData( newData );
                     AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
                 }}
