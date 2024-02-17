@@ -65,11 +65,12 @@ const App = () => {
   useEffect(() => {
     if ( data.connected ) {
       // Gotta load those todos.
-      sync( [] );
+      sync( todos );
     }
-  }, [data, wpURL, login, pass]);
+  }, [data, wpURL, login, pass ]);
 
   useEffect(() => {
+    console.log( 'Saving todos to local storage', todos );
     AsyncStorage.setItem('todos', JSON.stringify( todos) );
   }, [todos]);
 

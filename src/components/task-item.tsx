@@ -10,10 +10,12 @@ import {
   Input,
   useToken
 } from 'native-base'
-import Checkbox from 'expo-checkbox';
 import AnimatedTaskLabel from './animated-task-label'
 import SwipableView from './swipable-view'
 import { Feather } from '@expo/vector-icons'
+import {
+  Checkbox
+} from 'native-base'
 
 interface Props extends Pick<PanGestureHandlerProps, 'simultaneousHandlers'> {
   isEditing: boolean
@@ -93,8 +95,7 @@ const TaskItem = (props: Props) => {
         <Box width={30} height={30} mr={2}>
           <Pressable onPress={onToggleCheckbox}>
             <Checkbox
-              color={highlightColor}
-              style={{ width: 26, height: 26, margin: 2}}
+              size="lg"
               value={isDone}
             />
           </Pressable>
