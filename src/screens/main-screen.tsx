@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { Icon, VStack, useColorModeValue, Fab } from 'native-base'
 import { AntDesign } from '@expo/vector-icons'
 import AnimatedColorBox from '../components/animated-color-box'
@@ -45,10 +45,9 @@ export default function MainScreen( { todos, data, setTodos, refreshing, sync, r
     })
   }, [])
   const handleFinishEditingTaskItem = useCallback(_item => {
-    sync( todos );
-
+    sync();
     setEditingItemId(null)
-  }, [ todos, sync])
+  }, [ todos, sync, data ])
   const handlePressTaskItemLabel = useCallback(item => {
     setEditingItemId(item.id)
   }, [])
@@ -78,7 +77,7 @@ export default function MainScreen( { todos, data, setTodos, refreshing, sync, r
         pt="20px"
       >
         <TaskList
-          refresh={ () => sync( todos ) }
+          refresh={ () => sync() }
           filter={ filter }
           refreshing={ refreshing }
           data={todos}

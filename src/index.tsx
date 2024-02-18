@@ -35,52 +35,51 @@ const App = () => {
   const [ refreshing, setRefreshing ] = useState( false )
   const [pass, setPass] = useState('')
 
-  useEffect(() => {
-    AsyncStorage.getItem('wpurl').then( url => {
-        if (url) {
-            setWPURL(url)
-        }
-    } );
-    AsyncStorage.getItem('wplogin').then( l => {
-      if (l) {
-          setLogin( l );
+  useEffect( () => {
+    Promise.all( [
+      AsyncStorage.getItem('wpurl'),
+      AsyncStorage.getItem('wplogin'),
+      AsyncStorage.getItem('wppass'),
+      AsyncStorage.getItem('config'),
+      AsyncStorage.getItem('todos')
+    ] ).then( ([url, login, pass, savedconfig, savedtodos]) => {
+      let savedConfigObject = {};
+      let savedTodosObject = [];
+      if (url) {
+        setWPURL(url);
       }
-    } );
-    AsyncStorage.getItem('wppass').then( l => {
-      if (l) {
-          setPass( l );
+      if (login) {
+        setLogin(login);
       }
-    } );
-    AsyncStorage.getItem('config').then( read => {
-      if (read) {
-          setData( JSON.parse( read ) );
-          console.log('READING CONFIG: ', read);
+      if (pass) {
+        setPass(pass);
       }
-    } );
-    AsyncStorage.getItem('todos').then( read => {
-      if (read) {
-          setTodos( JSON.parse( read ) );
-          console.log('READING TODOS: ', read);
+      if (savedconfig) {
+        savedConfigObject = JSON.parse(savedconfig);
+        setData( savedConfigObject );
       }
-    } );
-  }, []);
+      if (savedtodos) {
+        savedTodosObject = JSON.parse(savedtodos);
+        setTodos( savedTodosObject );
+      }
+      console.log( 'Loaded Data', url, login, savedConfigObject );
+      if (url && login && pass && savedConfigObject.connected ) {
+        console.log( 'Syncing todos' );
+        sync( savedTodosObject, savedConfigObject, login, pass );
+      }
+    });
+  }, [] );
 
   useEffect(() => {
-    if ( data.connected ) {
-      // Gotta load those todos.
-      sync( todos );
-    }
-  }, [data, wpURL, login, pass ]);
-
-  useEffect(() => {
-    console.log( 'Saving todos to local storage', todos );
     if( todos.length > 0 ) {
+      console.log( 'Saving todos to local storage', todos );
+
       AsyncStorage.setItem('todos', JSON.stringify( todos ) );
     }
   }, [todos]);
 
 
-  function sync( cachedData: any ) {
+  function sync( cachedData: any, data: any, login, pass ) {
     const url = getURLForCPT( data.post_types, data.post_type );
 
     if( ! url ) {
@@ -191,7 +190,7 @@ const App = () => {
               todos={ todos }
               setTodos={ setTodos }
               refreshing={ refreshing }
-              sync={ sync }
+              sync={ () => sync( todos, data, login, pass ) }
               {...props }
           />
       )}
