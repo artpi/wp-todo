@@ -3,6 +3,7 @@ import {
   Box,
   HStack,
   VStack,
+  ScrollView,
   Center,
   Avatar,
   Heading,
@@ -40,6 +41,7 @@ const Sidebar = (props: DrawerContentComponentProps) => {
       bg={useColorModeValue('blue.50', 'darkBlue.800')}
       p={7}
     >
+      <ScrollView>
       <VStack flex={1} space={2}>
         <HStack justifyContent="flex-end">
           <IconButton
@@ -120,10 +122,11 @@ const Sidebar = (props: DrawerContentComponentProps) => {
         >
           Log Out
         </MenuButton>
-      </VStack>
-      <Center>
+        <Center>
         <ThemeToggle />
-      </Center>
+        </Center>
+      </VStack>
+      </ScrollView>
     </AnimatedColorBox>
   )
 }
