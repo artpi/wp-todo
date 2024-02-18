@@ -34,9 +34,9 @@ export function getWPAdminUrlForCPT( wpURL: string, postType: string ) {
   return normalizeUrl( wpURL ) + '/wp-admin/edit.php?post_type=' + postType;
 }
 
-export function normalizeUrl( url: string ) {
+export function normalizeUrl( url: string, protocol: string = 'http') {
   if (!/^https?:\/\//i.test(url)) {
-    return 'http://' + url;
+    return protocol + '://' + url;
   }
   return url;
 }

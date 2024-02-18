@@ -35,7 +35,20 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
   function connectWP( url: string, username: string, password: string ) {
     //normalize url, add https if not present
     setConnecting( true );
-    const siteData = fetch( normalizeUrl(url ) + `?rest_route=/`)
+    const siteData = fetch( normalizeUrl(url, 'https' ) + `?rest_route=/`)
+    .catch( err => fetch( normalizeUrl(url, 'http' ) + `?rest_route=/`) )
+    .catch( err => {
+      // We are going to deal with special snowflake of WPCOM later.
+      // const host = (new URL( normalizeUrl( url, 'https' ) ) ).hostname;
+      // const wpcomURL = 'https://public-api.wordpress.com/wpcom/v2/sites/' + host + '/';
+      // return fetch( wpcomURL );
+
+      // Could not find proper WP REST API.
+      if ( url.indexOf( '.wordpress.com' ) > -1 ) {
+        return Promise.reject( { message: 'This site is WordPress.com site without plugins. Unfortunately, these sites do not support application passwords.'} );
+      }
+      return Promise.reject( { message: 'I had trouble connecting to REST API on this site.'} );
+    } )
     .then((response) => response.json())
     .then( response => {
         data['site_home'] = response.home;
