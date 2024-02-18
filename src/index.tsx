@@ -99,12 +99,21 @@ const App = () => {
             method: 'DELETE'
           }, login, pass );
         } else if( typeof todo.id === 'string' &&  todo.id.substring(0,3) === 'new' ) {
+          let payload = {
+            title: todo.subject,
+            status: 'private'
+          };
+          // If there is inbox
+          console.log( 'TAXONOMY', data.taxonomy_terms );
+          if( data.taxonomy && data.taxonomy_terms ) {
+            const inbox = data.taxonomy_terms.find( term => term.slug === 'inbox' );
+            if ( inbox ) {
+              payload[ data.taxonomy ] = [ inbox.id ];
+            }
+          }
           return authenticadedFetch( url, {
             method: 'POST',
-            body: JSON.stringify( {
-              title: todo.subject,
-              status: 'private'
-            } )
+            body: JSON.stringify( payload )
           }, login, pass );
         } else {
           let newData = {
@@ -123,6 +132,7 @@ const App = () => {
       setRefreshing( true );
       const modifiedURL = new URL( url );
       modifiedURL.searchParams.set( 'status', 'private' );
+      modifiedURL.searchParams.set( 'per_page', '100' );
       modifiedURL.searchParams.set( 'context', 'edit' );
       return authenticadedFetch( modifiedURL.toString() , {}, login, pass ).then( response => {
         setTodos( response.map( post => ( {
