@@ -244,12 +244,14 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
         ) }
         { ( posPlugin === 0 ) && (
           <>
-            <Heading p={6} size="m">
+            <Heading p={6} size="md">
                 Personal OS Plugin recommended
               </Heading>
               <Text p={6}>
                 WP TODO can work with any post type and taxonomy. However, I recommend using the "Personal OS" plugin to manage your TODOs.
-                You can also use existing Custom Post Types and taxonomies without additional plugins.
+              </Text>
+              <Text p={6}>
+                You can also use existing Custom Post Types and taxonomies without any additional plugins.
               </Text>
               <HStack
                 justifyContent="space-between"
@@ -339,12 +341,20 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
           }
           onPress={ () => {
               setConnecting( true );
-              loadTaxonomyTerms( data.taxonomy ).then( response => {
-                const newData = { ...data, connected: true,  taxonomy_terms: response };
+              if( data.taxonomy ) {
+                loadTaxonomyTerms( data.taxonomy ).then( response => {
+                  const newData = { ...data, connected: true,  taxonomy_terms: response };
+                  setConnecting( false );
+                  setData( newData );
+                  AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+                });
+              } else {
+                const newData = { ...data, connected: true };
                 setConnecting( false );
                 setData( newData );
                 AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
-              });
+              }
+
           }}
           >{ "Continue" }</Button> ) }
       </> ) }

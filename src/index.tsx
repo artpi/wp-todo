@@ -151,6 +151,7 @@ const App = () => {
 
   function logOut() {
     setData( initialData );
+    setTodos( [] );
     setWPURL('');
     setLogin('');
     setPass('');
@@ -158,6 +159,7 @@ const App = () => {
     AsyncStorage.removeItem('wplogin');
     AsyncStorage.removeItem('wppass');
     AsyncStorage.removeItem('config');
+    AsyncStorage.removeItem('todos');
   }
 
   if ( !data.connected ) {
