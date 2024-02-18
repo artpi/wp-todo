@@ -1,18 +1,19 @@
 import React, { useCallback, useState } from 'react'
 import { Platform, KeyboardAvoidingView } from 'react-native'
-import { useColorModeValue, Input, Button, Heading, Text, VStack, Link } from 'native-base'
+import { useColorModeValue, Input, Button, Heading, Text, HStack, VStack, Link } from 'native-base'
 import AnimatedColorBox from '../components/animated-color-box'
 import Masthead from '../components/masthead'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeSyntheticEvent, TextInputChangeEventData, ActivityIndicator, View } from 'react-native'
 import {Picker} from '@react-native-picker/picker';
 import { authenticadedFetch, normalizeUrl } from '../utils/wpapi';
-import { FontAwesome5, } from '@expo/vector-icons'
+import { FontAwesome5, Feather } from '@expo/vector-icons'
 import LinkButton from '../components/link-button'
 
 export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, setPass, data, setData }) {
 
   const [connecting, setConnecting] = useState(false);
+  const [ posPlugin, setPosPlugin ] = useState( 0 );// 0 - not detected, 1 - detected, 2 - continuing without it.
   const [err, setErr] = useState('');
 
   const pickerStyle = {
@@ -86,13 +87,15 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
         if ( response[0]['todo'] && response[1]['todo_category'] ) {
           newData['post_type'] = 'todo';
           newData['taxonomy'] = 'todo_category';
-          console.log( 'Gonna load taxonomy terms', newData );
+          setPosPlugin( 1 );
+        } else {
+          newData['post_type'] = 'post';
         }
+
         return Promise.resolve( newData );
         
     } )
     .then( ( newData ) => {
-      console.log( 'NEW DATA 2', newData );
       setData( oldData => ( { ...oldData, ...newData } ) );
       setConnecting( false );
     } )
@@ -230,13 +233,56 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
         </>
       ) }
       </KeyboardAvoidingView>
-      { ! connecting && ( <>
-        { data.connected && data.site_title && <Heading p={6} size="m">
+      { ! connecting && data.post_types.length > 0 && ( <>
+        { data.connected && data.site_title && <Heading p={6} size="md">
           { "Connected to " + data.site_title }
         </Heading> }
-        { data.post_types.length > 0 && (
+        { ( posPlugin === 1 ) && (
+          <Heading p={6} size="m">
+            WP TODO detected the "Personal OS" plugin. Your TODOs will be saved as 'TODO' post type and 'TODO Category' taxonomy. You are good to go.
+          </Heading>
+        ) }
+        { ( posPlugin === 0 ) && (
           <>
-              <Heading p={4} size="md" style={{marginBottom: 0}}>Which post type holds your TODOs?</Heading>
+            <Heading p={6} size="m">
+                Personal OS Plugin recommended
+              </Heading>
+              <Text p={6}>
+                WP TODO can work with any post type and taxonomy. However, I recommend using the "Personal OS" plugin to manage your TODOs.
+                You can also use existing Custom Post Types and taxonomies without additional plugins.
+              </Text>
+              <HStack
+                justifyContent="space-between"
+              >
+              <LinkButton
+                colorScheme="secondary"
+                size="md"
+                width={ '40%' }
+                marginLeft={ '6'}
+                borderRadius="full"
+                href="https://piszek.com/personal-os"
+                leftIcon={
+                  <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
+                }>Try Personal OS</LinkButton>
+              <Button
+                colorScheme="primary"
+                size="md"
+                width={ '40%' }
+                marginRight={ '6' }
+                borderRadius="full"
+                rightIcon={
+                  <Feather name="arrow-right-circle" size={24} color={'white'} opacity={0.5} />
+                }
+                onPress={ () => {
+                  setPosPlugin( 2 );
+                } }
+              >No Plugins</Button>
+              </HStack>
+          </>
+        ) }
+        { ( posPlugin === 2 ) && (
+          <>
+              <Heading p={4} size="s" style={{marginBottom: 0}}>Which post type holds your TODOs?</Heading>
               <Picker
                 style={ pickerStyle }
                 itemStyle={{ padding:0, margin:0}}
@@ -257,7 +303,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                 data.post_types.find( type => type.slug === data.post_type ).taxonomies.length > 0
                 ) && (
                 <>
-                    <Heading p={4} size="md">How do you seperate your TODOs?</Heading>
+                    <Heading p={4} size="s">How do you group your TODOs?</Heading>
                     <Picker
                       style={ pickerStyle }
                       itemStyle={{ padding:0, margin:0}}
@@ -266,7 +312,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                         setData( oldData => ( { ...oldData, taxonomy: itemValue } ) );
                       } }
                     >
-                    <Picker.Item key='' label="Do not separate my todos" value='' />
+                    <Picker.Item key='' label="Keep only one list" value='' />
                     { data.post_types.find( type => type.slug === data.post_type ).taxonomies.map( ( taxonomy_slug: any ) => {
                         const taxonomy = data.taxonomies[taxonomy_slug];
                         return ( <Picker.Item key={ taxonomy.slug } label={ taxonomy.name + ' (' + taxonomy.slug + ')' } value={ taxonomy.slug } /> );
@@ -274,33 +320,33 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
                     </Picker>
                 </>
               ) }
-              <Button
-                colorScheme="secondary"
-                margin={ '10%' }
-                size="md"
-                borderRadius="full"
-                marginLeft={ '6'}
-                marginRight={ '6'}
-                disabled={ (
-                  ! data.post_types ||
-                  ! data.post_type || (
-                    data.taxonomy.length > 0 && ! data.taxonomy_terms
-                  ) ) }
-                leftIcon={
-                  <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
-                }
-                onPress={ () => {
-                    setConnecting( true );
-                    loadTaxonomyTerms( data.taxonomy ).then( response => {
-                      const newData = { ...data, connected: true,  taxonomy_terms: response };
-                      setConnecting( false );
-                      setData( newData );
-                      AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
-                    });
-                }}
-                >{ "Continue" }</Button>
           </>
         ) }
+        { ( posPlugin !== 0 ) && ( <Button
+          colorScheme="secondary"
+          margin={ '10%' }
+          size="md"
+          borderRadius="full"
+          marginLeft={ '6'}
+          marginRight={ '6'}
+          disabled={ (
+            ! data.post_types ||
+            ! data.post_type || (
+              data.taxonomy.length > 0 && ! data.taxonomy_terms
+            ) ) }
+          leftIcon={
+            <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
+          }
+          onPress={ () => {
+              setConnecting( true );
+              loadTaxonomyTerms( data.taxonomy ).then( response => {
+                const newData = { ...data, connected: true,  taxonomy_terms: response };
+                setConnecting( false );
+                setData( newData );
+                AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+              });
+          }}
+          >{ "Continue" }</Button> ) }
       </> ) }
       </VStack>
     </AnimatedColorBox>
