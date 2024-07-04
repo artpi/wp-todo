@@ -27,7 +27,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
   }
 
   function loadTaxonomyTerms( taxonomy ) {
-    const url = data.taxonomies[taxonomy]._links['wp:items'][0].href;
+    const url = data.taxonomies[taxonomy]._links['wp:items'][0].href + '?per_page=100';
     console.log( 'LOADING TAXONOMY TERMS', url );
     return authenticadedFetch( url, {}, login, pass );
   }
