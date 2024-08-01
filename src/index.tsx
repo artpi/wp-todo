@@ -130,7 +130,8 @@ const App = () => {
       console.log( 'Synced Data', JSON.stringify(responses) );
       setRefreshing( true );
       const modifiedURL = new URL( url );
-      modifiedURL.searchParams.set( 'status', 'private' );
+      modifiedURL.searchParams.set( 'status[]', 'public' );
+      modifiedURL.searchParams.set( 'status[]', 'private' );
       modifiedURL.searchParams.set( 'per_page', '100' );
       modifiedURL.searchParams.set( 'context', 'edit' );
       return authenticadedFetch( modifiedURL.toString() , {}, login, pass ).then( response => {
