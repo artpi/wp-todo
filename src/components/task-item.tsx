@@ -5,6 +5,7 @@ import {
   Pressable,
   Box,
   HStack,
+  Text,
   useColorModeValue,
   Icon,
   Input,
@@ -86,19 +87,26 @@ const TaskItem = (props: Props) => {
       }
     >
       <HStack
-        alignItems="center"
+        alignItems="top"
         w="full"
         px={4}
         py={2}
         bg={useColorModeValue('warmGray.50', 'primary.900')}
       >
-        <Box width={30} height={30} mr={2}>
-          <Checkbox
-            size="lg"
-            value={isDone}
-            onChange={ onToggleCheckbox }
-          />
+        <Pressable
+          onPress={onToggleCheckbox}
+        >
+          <Box width={30} height={30} mr={2}
+            onPress={onToggleCheckbox}
+          >
+            <Checkbox
+              size="lg"
+              value={ subject }
+              isChecked={isDone}
+              isDisabled={true}
+            />
         </Box>
+        </Pressable>
         {isEditing ? (
           <Input
             placeholder="Task"
@@ -111,16 +119,22 @@ const TaskItem = (props: Props) => {
             blurOnSubmit
             onChange={handleChangeSubject}
             onBlur={onFinishEditing}
+            flexWrap={'wrap'}
           />
         ) : (
-          <AnimatedTaskLabel
-            textColor={activeTextColor}
-            inactiveTextColor={doneTextColor}
-            strikethrough={isDone}
-            onPress={onPressLabel}
-          >
-            {subject}
-          </AnimatedTaskLabel>
+          <Pressable onPress={onPressLabel}>
+        <Text
+          strikeThrough={isDone}
+          numberOfLines={3}
+          fontSize={19}
+          isTruncated={false}
+          ellipsizeMode="tail"
+          maxW={320}
+          color={isDone ? doneTextColor : activeTextColor}
+        >
+          {subject}
+        </Text>
+    </Pressable>
         )}
       </HStack>
     </SwipableView>

@@ -84,7 +84,12 @@ const Sidebar = (props: DrawerContentComponentProps) => {
         >
           All Tasks
         </MenuButton>
-        { data.taxonomy_terms && data.taxonomy_terms.length > 0 && data.taxonomy_terms.map( taxonomy => (
+        { data.taxonomy_terms && data.taxonomy_terms.length > 0 && data.taxonomy_terms.map( taxonomy => {
+          const todoCount = todos.filter( t => t.terms ? ( t.terms.indexOf( taxonomy.id ) !== -1 ) : [] ).length;
+          if( todoCount === 0 ) {
+            return false;
+          }
+          return (
             <MenuButton
               active={ state.routes[state.index].params && state.routes[state.index].params?.term === taxonomy.slug}
               onPress={() => { navigation.navigate('Main', { term: taxonomy.slug }) }}
@@ -98,7 +103,7 @@ const Sidebar = (props: DrawerContentComponentProps) => {
             >
               { taxonomy.name }
             </MenuButton>
-        ) ) }
+        ) } ).filter( Boolean ) }
         <MenuButton
           active={ false }
           icon="external-link"
