@@ -78,6 +78,11 @@ const App = () => {
     }
   }, [todos]);
 
+  function loadTaxonomyTerms( data, taxonomy ) {
+    const url = data.taxonomies[taxonomy]._links['wp:items'][0].href + '?per_page=100';
+    console.log( 'LOADING TAXONOMY TERMS', url );
+    return authenticadedFetch( url, {}, login, pass );
+  }
 
   function sync( cachedData: any, data: any, login, pass ) {
     const url = getURLForCPT( data.post_types, data.post_type );
@@ -134,7 +139,14 @@ const App = () => {
       modifiedURL.searchParams.set( 'status[]', 'private' );
       modifiedURL.searchParams.set( 'per_page', '100' );
       modifiedURL.searchParams.set( 'context', 'edit' );
-      return authenticadedFetch( modifiedURL.toString() , {}, login, pass ).then( response => {
+      // Pull taxonomies.
+      loadTaxonomyTerms( data, data.taxonomy ).then( response => {
+        const newData = { ...data, taxonomy_terms: response };
+        setData( newData );
+        AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+      });
+      // Pull latest todos.
+      authenticadedFetch( modifiedURL.toString() , {}, login, pass ).then( response => {
         setTodos( response.map( post => ( {
           id:post.id,
           subject: post.title.raw,

@@ -26,12 +26,6 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
     pickerStyle['marginBottom'] = -48;
   }
 
-  function loadTaxonomyTerms( taxonomy ) {
-    const url = data.taxonomies[taxonomy]._links['wp:items'][0].href + '?per_page=100';
-    console.log( 'LOADING TAXONOMY TERMS', url );
-    return authenticadedFetch( url, {}, login, pass );
-  }
-
   function connectWP( url: string, username: string, password: string ) {
     //normalize url, add https if not present
     setConnecting( true );
@@ -353,21 +347,11 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
             <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
           }
           onPress={ () => {
-              setConnecting( true );
-              if( data.taxonomy ) {
-                loadTaxonomyTerms( data.taxonomy ).then( response => {
-                  const newData = { ...data, connected: true,  taxonomy_terms: response };
-                  setConnecting( false );
-                  setData( newData );
-                  AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
-                });
-              } else {
-                const newData = { ...data, connected: true };
-                setConnecting( false );
-                setData( newData );
-                AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
-              }
-
+              //setConnecting( true );
+              const newData = { ...data, connected: true };
+              //setConnecting( false );
+              setData( newData );
+              AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
           }}
           >{ "Continue" }</Button> ) }
       </> ) }
