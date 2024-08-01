@@ -110,9 +110,14 @@ const App = () => {
           // If there is inbox
           console.log( 'TAXONOMY', data.taxonomy_terms );
           if( data.taxonomy && data.taxonomy_terms ) {
-            const inbox = data.taxonomy_terms.find( term => term.slug === 'inbox' );
-            if ( inbox ) {
-              payload[ data.taxonomy ] = [ inbox.id ];
+            payload[ data.taxonomy ] = [];
+            if ( todo.terms && todo.terms.length > 0 ) {
+              payload[ data.taxonomy ] = payload[ data.taxonomy ].concat( todo.terms );
+            } else {
+              const inbox = data.taxonomy_terms.find( term => term.slug === 'inbox' );
+              if ( inbox ) {
+                payload[ data.taxonomy ].push( inbox.id );
+              }
             }
           }
           return authenticadedFetch( url, {

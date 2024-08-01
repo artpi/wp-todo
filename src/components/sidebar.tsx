@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
   Box,
   HStack,
@@ -10,6 +10,8 @@ import {
   IconButton,
   useColorModeValue,
   Link,
+  Text,
+  Switch,
   Badge
 } from 'native-base'
 import { DrawerContentComponentProps } from '@react-navigation/drawer'
@@ -23,6 +25,8 @@ import { getWPAdminUrlForCPT } from '../utils/wpapi'
 const Sidebar = (props: DrawerContentComponentProps) => {
   const { state, navigation, data, logOut, wpURL, todos } = props;
   const currentRoute = state.routeNames[state.index]
+
+  const [ showEmpty, setShowEmpty ] = useState( false );
 
   const handlePressBackButton = useCallback(() => {
     navigation.closeDrawer()
@@ -86,7 +90,7 @@ const Sidebar = (props: DrawerContentComponentProps) => {
         </MenuButton>
         { data.taxonomy_terms && data.taxonomy_terms.length > 0 && data.taxonomy_terms.map( taxonomy => {
           const todoCount = todos.filter( t => t.terms ? ( t.terms.indexOf( taxonomy.id ) !== -1 ) : [] ).length;
-          if( todoCount === 0 ) {
+          if( ! showEmpty && todoCount === 0 ) {
             return false;
           }
           return (
@@ -128,6 +132,14 @@ const Sidebar = (props: DrawerContentComponentProps) => {
           Log Out
         </MenuButton>
         <Center>
+        <HStack space={2} alignItems="center" style={ { marginBottom: 16 }}>
+          <Text>Hide Empty</Text>
+          <Switch
+            isChecked={ showEmpty }
+            onToggle={ () => setShowEmpty( ! showEmpty ) }
+          ></Switch>
+          <Text>Show Empty</Text>
+        </HStack>
         <ThemeToggle />
         </Center>
       </VStack>

@@ -97,15 +97,20 @@ export default function MainScreen( { todos, data, setTodos, refreshing, sync, r
         colorScheme={useColorModeValue('blue', 'darkBlue')}
         bg={useColorModeValue('blue.500', 'blue.400')}
         onPress={() => {
-          const id = 'new_' + shortid.generate()
+          const id = 'new_' + shortid.generate();
+          const newTodo = {
+            id,
+            subject: '',
+            done: false,
+            dirty: true,
+            deleted: false,
+            terms: [],
+          };
+          if( filter && filter > 0) {
+            newTodo.terms.push( filter );
+          }
           setTodos([
-            {
-              id,
-              subject: '',
-              done: false,
-              dirty: true,
-              deleted: false
-            },
+            newTodo,
             ...todos
           ])
           setEditingItemId(id)
