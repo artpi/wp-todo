@@ -191,12 +191,17 @@ const App = () => {
 
         //Calendar.getRemindersAsync([]);
 
-        // Save to synced reminders list
+        // push ios reminders to WP
         if ( data.taxonomy && data.taxonomies[ data.taxonomy ] && data.reminders_calendars.length > 0 ) {
           const syncedCalendars = data.taxonomy_terms.map( term => term.meta.reminders_calendar ).filter( Boolean);
           const reminders_pushed = Calendar.getRemindersAsync( syncedCalendars ).then( reminders => {
             const updates = [];
             reminders.forEach(reminder => {
+              const synced_notebook = data.taxonomy_terms.find( term => term.meta.reminders_calendar === reminder.calendarId );
+              if( ! synced_notebook ) {
+                // This reminder is not synced.
+                return;
+              }
               if( reminder.completed ) {
                 console.log( 'Skipping completed reminder', reminder );
                 return;
@@ -212,7 +217,7 @@ const App = () => {
                     reminders_id: reminder.id
                   }
                 };
-                payload[ data.taxonomy ] = [ data.taxonomy_terms.find( term => term.meta.reminders_calendar === reminder.calendarId ).id ];
+                payload[ data.taxonomy ] = [ synced_notebook.id ];
                 console.log( 'NEW TODO', JSON.stringify( payload ) );
                 updates.push( authenticadedFetch( url, {
                   method: 'POST',
@@ -222,6 +227,7 @@ const App = () => {
             });
             return Promise.all( updates );
           });
+          // Push wp to ios reminders
           reminders_pushed.then( () => {
             const rest_base = data.taxonomies[ data.taxonomy ].rest_base;
             response.forEach( todo => {
@@ -255,7 +261,8 @@ const App = () => {
                     }
                   } )
                 }, login, pass ).then( response => {
-                  console.log( 'Updated todo with reminder', JSON.stringify( response ) );
+                  //TODO: push that to state.
+                  console.log( 'Created a new todo from reminder', JSON.stringify( response ) );
                 } );
               } );
             } );
