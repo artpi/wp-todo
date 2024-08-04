@@ -115,16 +115,17 @@ const App = () => {
   
       updatePromises = dataToSync.map( todo => {
         if( todo.deleted || todo.done ) {
-          authenticadedFetch( url + '/' + todo.id, {
+          return authenticadedFetch( url + '/' + todo.id, {
             method: 'DELETE'
-          }, login, pass ).then( deleteResponse => {
-            // When completing tasks, we wanna mark the reminder as completed. This wont work if completed from the network.
-            console.log( 'Completed TODO', JSON.stringify( deleteResponse ) );
-            if ( deleteResponse.meta && deleteResponse.meta.reminders_id ) {
-              return Calendar.updateReminderAsync( deleteResponse.meta.reminders_id, { completed:true } ).then( () => Promise.resolve( deleteResponse ) );           
-            }
-            return Promise.resolve( deleteResponse )
-          } );
+          }, login, pass );
+          // .then( deleteResponse => {
+          //   // When completing tasks, we wanna mark the reminder as completed. This wont work if completed from the network.
+          //   console.log( 'Completed TODO', JSON.stringify( deleteResponse ) );
+          //   if ( deleteResponse.meta && deleteResponse.meta.reminders_id ) {
+          //     return Calendar.updateReminderAsync( deleteResponse.meta.reminders_id, { completed:true } ).then( () => Promise.resolve( deleteResponse ) );           
+          //   }
+          //   return Promise.resolve( deleteResponse )
+          // } );
         } else if( typeof todo.id === 'string' &&  todo.id.substring(0,3) === 'new' ) {
           let payload = {
             title: todo.subject,
@@ -162,11 +163,6 @@ const App = () => {
     Promise.all( updatePromises ).then( responses => {
       console.log( 'Synced Data', JSON.stringify(responses) );
       setRefreshing( true );
-      const modifiedURL = new URL( url );
-      modifiedURL.searchParams.set( 'status[]', 'public' );
-      modifiedURL.searchParams.set( 'status[]', 'private' );
-      modifiedURL.searchParams.set( 'per_page', '100' );
-      modifiedURL.searchParams.set( 'context', 'edit' );
       // Pull taxonomies.
       loadTaxonomyTerms( data, data.taxonomy ).then( response => {
         setData( prevData => {
@@ -185,9 +181,33 @@ const App = () => {
           return newData;
         } );
       } );
+
       // Pull latest todos.
-      authenticadedFetch( modifiedURL.toString() , {}, login, pass ).then( response => {
-        setTodos( response.map( post => ( {
+      function getPagePromise( page, status, previousData ) {
+        const modifiedURL = new URL( url );
+        modifiedURL.searchParams.set( 'per_page', '100' );
+        modifiedURL.searchParams.set( 'context', 'edit' );
+        modifiedURL.searchParams.set( 'page', page );
+        modifiedURL.searchParams.set( 'status', status );
+        return authenticadedFetch( modifiedURL.toString() , {}, login, pass )
+        .then( response => {
+          const data = previousData.concat( response );
+          if( response.length < 100 ) {
+            // All results
+            console.log( 'All results', data );
+            return Promise.resolve( data );
+          } else {
+            return getPagePromise(page + 1, status, data );
+          }
+        } )
+      }
+      Promise.all( [
+        getPagePromise(1, 'publish', []),
+        getPagePromise(1, 'private', []),
+        getPagePromise(1, 'trash', [] )
+      ] ).then( ( responses ) => {
+        const response = responses.flat();
+        setTodos( response.filter( post => {  return ( post.status !== 'trash' ) } ).map( post => ( {
           id:post.id,
           subject: post.title.raw,
           done: false,
@@ -199,7 +219,7 @@ const App = () => {
         //Calendar.getRemindersAsync([]);
 
         // push ios reminders to WP
-        if ( data.taxonomy && data.taxonomies[ data.taxonomy ] && data.reminders_calendars.length > 0 ) {
+        if ( data.taxonomy && data.taxonomies[ data.taxonomy ] && data.reminders_calendars && data.reminders_calendars.length > 0 ) {
           const syncedCalendars = data.taxonomy_terms.map( term => term.meta.reminders_calendar ).filter( Boolean);
           const reminders_pushed = Calendar.getRemindersAsync( syncedCalendars ).then( reminders => {
             const updates = [];
