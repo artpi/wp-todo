@@ -115,9 +115,16 @@ const App = () => {
   
       updatePromises = dataToSync.map( todo => {
         if( todo.deleted || todo.done ) {
-          return authenticadedFetch( url + '/' + todo.id, {
+          authenticadedFetch( url + '/' + todo.id, {
             method: 'DELETE'
-          }, login, pass );
+          }, login, pass ).then( deleteResponse => {
+            // When completing tasks, we wanna mark the reminder as completed. This wont work if completed from the network.
+            console.log( 'Completed TODO', JSON.stringify( deleteResponse ) );
+            if ( deleteResponse.meta && deleteResponse.meta.reminders_id ) {
+              return Calendar.updateReminderAsync( deleteResponse.meta.reminders_id, { completed:true } ).then( () => Promise.resolve( deleteResponse ) );           
+            }
+            return Promise.resolve( deleteResponse )
+          } );
         } else if( typeof todo.id === 'string' &&  todo.id.substring(0,3) === 'new' ) {
           let payload = {
             title: todo.subject,
