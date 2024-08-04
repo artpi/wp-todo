@@ -8,6 +8,7 @@ import Sidebar from './components/sidebar'
 import SetupScreen from './screens/setup-screen'
 import { authenticadedFetch, getURLForCPT } from './utils/wpapi';
 import { err } from 'react-native-svg';
+import * as Calendar from 'expo-calendar';
 
 
 const Drawer = createDrawerNavigator()
@@ -25,6 +26,7 @@ const initialData = {
   taxonomy_terms: {},
   username: '',
   gravatar: '',
+  reminders_calendars: [],
 }
 
 const App = () => {
@@ -34,15 +36,29 @@ const App = () => {
   const [login, setLogin] = useState('')
   const [ refreshing, setRefreshing ] = useState( false )
   const [pass, setPass] = useState('')
+  const [remindersPermission, requestRemindersPermission] = Calendar.useRemindersPermissions();
+
+  useEffect(() => {
+    (async () => {
+      if ( ! remindersPermission || (  remindersPermission.status !== 'granted' && remindersPermission.canAskAgain ) ) {
+        console.log('Requesting reminders permission');
+        const permissionResponse = await requestRemindersPermission();
+        console.log( 'Reminders permission Response', permissionResponse );
+      }
+    })();
+  }, []);
 
   useEffect( () => {
-    Promise.all( [
+  
+    const promises = [
       AsyncStorage.getItem('wpurl'),
       AsyncStorage.getItem('wplogin'),
       AsyncStorage.getItem('wppass'),
       AsyncStorage.getItem('config'),
-      AsyncStorage.getItem('todos')
-    ] ).then( ([url, login, pass, savedconfig, savedtodos]) => {
+      AsyncStorage.getItem('todos'),
+    ];
+
+    Promise.all( promises ).then( ([url, login, pass, savedconfig, savedtodos ]) => {
       let savedConfigObject = {};
       let savedTodosObject = [];
       if (url) {
@@ -92,7 +108,7 @@ const App = () => {
       return;
     }
     let updatePromises = [];
-    if( cachedData) {
+    if( cachedData ) {
       console.log( 'Cached Data', JSON.stringify(cachedData) );
       const dataToSync = cachedData.filter( todo => todo.dirty ).filter( todo => todo.subject.length > 0 );
       console.log( 'Trigggering sync', JSON.stringify(dataToSync) );
@@ -146,10 +162,22 @@ const App = () => {
       modifiedURL.searchParams.set( 'context', 'edit' );
       // Pull taxonomies.
       loadTaxonomyTerms( data, data.taxonomy ).then( response => {
-        const newData = { ...data, taxonomy_terms: response };
-        setData( newData );
-        AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+        setData( prevData => {
+          //console.log( 'TERMS', JSON.stringify(response, null, 2) );
+          const newData = { ...prevData, taxonomy_terms: response };
+          AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+          return newData;
+        } );
       });
+
+      // Get Calendars for selecting to sync.
+      Calendar.getCalendarsAsync( Calendar.EntityTypes.REMINDER ).then( response => {
+        setData( prevData => {
+          const newData = { ...prevData, reminders_calendars: response };
+          AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+          return newData;
+        } );
+      } );
       // Pull latest todos.
       authenticadedFetch( modifiedURL.toString() , {}, login, pass ).then( response => {
         setTodos( response.map( post => ( {
@@ -159,6 +187,82 @@ const App = () => {
           dirty: false,
           terms: data.taxonomy ? post[ data.taxonomies[ data.taxonomy ].rest_base ] : []
         } ) ) );
+        // Save new Reminders to todos.
+
+        //Calendar.getRemindersAsync([]);
+
+        // Save to synced reminders list
+        if ( data.taxonomy && data.taxonomies[ data.taxonomy ] && data.reminders_calendars.length > 0 ) {
+          const syncedCalendars = data.taxonomy_terms.map( term => term.meta.reminders_calendar ).filter( Boolean);
+          const reminders_pushed = Calendar.getRemindersAsync( syncedCalendars ).then( reminders => {
+            const updates = [];
+            reminders.forEach(reminder => {
+              if( reminder.completed ) {
+                console.log( 'Skipping completed reminder', reminder );
+                return;
+              }
+              const existing = response.find( post => post.meta && post.meta.reminders_id === reminder.id );
+              if ( ! existing ) {
+                // Add the reminder.
+                const payload = {
+                  title: reminder.title,
+                  post_name: 'ios_' + reminder.id,
+                  status: 'private',
+                  meta: {
+                    reminders_id: reminder.id
+                  }
+                };
+                payload[ data.taxonomy ] = [ data.taxonomy_terms.find( term => term.meta.reminders_calendar === reminder.calendarId ).id ];
+                console.log( 'NEW TODO', JSON.stringify( payload ) );
+                updates.push( authenticadedFetch( url, {
+                  method: 'POST',
+                  body: JSON.stringify( payload )
+                }, login, pass ) );
+              }
+            });
+            return Promise.all( updates );
+          });
+          reminders_pushed.then( () => {
+            const rest_base = data.taxonomies[ data.taxonomy ].rest_base;
+            response.forEach( todo => {
+              if ( todo.meta && todo.meta.reminders_id ) {
+                // Already exists.
+                Calendar.updateReminderAsync( todo.meta.reminders_id, {
+                  title: todo.title.raw,
+                  completed: ( todo.status === 'trash' )
+                } );
+                return;
+              }
+              const terms = todo[ rest_base ]
+                .map( id => data.taxonomy_terms.find( term => term.id === id ) )
+                .filter( term => term && term.meta.reminders_calendar && term.meta.reminders_calendar !== '' )
+                .slice( 0, 1 ); // Only one calendar for now.
+              if ( terms.length === 0 ) {
+                return;
+              }
+              const reminders_list_id = terms[0].meta.reminders_calendar;
+              console.log( 'ADDING TO REMINDERS', reminders_list_id );
+              // Adding reminders to the list.
+              Calendar.createReminderAsync( reminders_list_id, {
+                title: todo.title.raw,
+              } ).then( reminder_id => {
+                console.log( 'Created Reminder', reminder_id );
+                authenticadedFetch( url + '/' + todo.id, {
+                  method: 'POST',
+                  body: JSON.stringify( {
+                    meta: {
+                      reminders_id: reminder_id
+                    }
+                  } )
+                }, login, pass ).then( response => {
+                  console.log( 'Updated todo with reminder', JSON.stringify( response ) );
+                } );
+              } );
+            } );
+          });
+        
+        }
+
         setRefreshing( false );
       }).catch ( err => {
         console.log( 'ERROR', err );
@@ -206,11 +310,15 @@ const App = () => {
       <Drawer.Screen name="Main">
         {(props) => (
           <MainScreen
+              key={"main"}
               data={ data }
               todos={ todos }
               setTodos={ setTodos }
               refreshing={ refreshing }
+              login={login}
+              pass={pass}
               sync={ () => sync( todos, data, login, pass ) }
+              setData={ setData }
               {...props }
           />
       )}

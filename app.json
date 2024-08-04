@@ -34,6 +34,14 @@
       "eas": {
         "projectId": "04e9cc46-63f9-4f6f-8438-84ade42bbbdf"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-calendar",
+        {
+          "remindersPermission": "The app needs to access your reminders."
+        }
+      ]
+    ]
   }
 }

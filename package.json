@@ -31,6 +31,7 @@
     "@react-navigation/drawer": "^6.1.8",
     "@react-navigation/native": "^6.0.6",
     "base-64": "^1.0.0",
+    "expo-calendar": "~12.2.1",
     "expo-checkbox": "^2.7.0",
     "expo-dev-client": "~3.3.8",
     "moti": "^0.16.1",
