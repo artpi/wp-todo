@@ -258,26 +258,76 @@ const App = () => {
           reminders_pushed.then( () => {
             const rest_base = data.taxonomies[ data.taxonomy ].rest_base;
             response.forEach( todo => {
-              if ( todo.meta && todo.meta.reminders_id ) {
-                // Already exists.
-                Calendar.updateReminderAsync( todo.meta.reminders_id, {
-                  title: todo.title.raw,
-                  completed: ( todo.status === 'trash' )
-                } );
-                return;
-              }
-              const terms = todo[ rest_base ]
+                const terms = todo[ rest_base ]
                 .map( id => data.taxonomy_terms.find( term => term.id === id ) )
                 .filter( term => term && term.meta.reminders_calendar && term.meta.reminders_calendar !== '' )
                 .slice( 0, 1 ); // Only one calendar for now.
-              if ( terms.length === 0 ) {
+              if ( terms.length === 0  || ! terms[0].meta.reminders_calendar || terms[0].meta.reminders_calendar === 'no' ) {
                 return;
               }
+
+              if ( todo.meta && todo.meta.reminders_id ) {
+                // Already exists.
+                //console.log( 'UPDATING REMINDER', todo.title.raw, terms[0].meta.reminders_calendar );
+                Calendar.getReminderAsync( todo.meta.reminders_id )
+                .catch( err => {})
+                .then( reminder => {
+                  if( ! reminder || ! reminder.id ) {
+                    return;
+                  }
+                  if ( reminder.calendarId !== terms[0].meta.reminders_calendar ) {
+                    // We have to delete and recreate in another list.
+                    console.log( 'Moving reminder', todo.title.raw, reminder.id, terms[0].meta.reminders_calendar );
+                    Calendar.deleteReminderAsync( reminder.id );
+                    Calendar.createReminderAsync( terms[0].meta.reminders_calendar, {
+                      title: todo.title.raw,
+                      completed: ( todo.status === 'trash' ),
+                    } ).then( newReminderId => {
+                      authenticadedFetch( url + '/' + todo.id, {
+                        method: 'POST',
+                        body: JSON.stringify( {
+                          meta: {
+                            reminders_id: newReminderId
+                          }
+                        } )
+                      }, login, pass ).then( response => {
+                        //TODO: push that to state.
+                      } );
+                    });
+                    return;
+                  }
+                  const changes = {};
+                  if ( reminder.title !== todo.title.raw ) {
+                    changes.title = todo.title.raw;
+                  }
+                  if( reminder.completed !== ( todo.status === 'trash' ) ) {
+                    changes.completed = ( todo.status === 'trash' );
+                  }
+                  if ( Object.keys( changes ).length > 0 ) {
+                    console.log( 'Reminder changes detected', todo.title.raw, changes );
+                    return Calendar.updateReminderAsync( todo.meta.reminders_id, changes );
+                  }
+                });
+                // Calendar.updateReminderAsync( todo.meta.reminders_id, {
+                //   // title: todo.title.raw,
+                //   // completed: ( todo.status === 'trash' ),
+                //   calendarId: 'F738DB44-3997-4A9C-80D6-113EB4A172FD',//terms[0].meta.reminders_calendar
+                // } ).catch( err => {
+                //   //console.log( 'Error updating reminder', err );
+                // } )
+                // .then( reminder => console.log( 'UPDATED', todo.title.raw, reminder ) );
+                return;
+              } else {
+                
+              }
+
               const reminders_list_id = terms[0].meta.reminders_calendar;
               console.log( 'ADDING TO REMINDERS', reminders_list_id );
               // Adding reminders to the list.
               Calendar.createReminderAsync( reminders_list_id, {
                 title: todo.title.raw,
+              } ).catch( err => {
+                console.log( 'Error creating reminder', err );
               } ).then( reminder_id => {
                 console.log( 'Created Reminder', reminder_id );
                 authenticadedFetch( url + '/' + todo.id, {
