@@ -6,7 +6,7 @@ import MainScreen from './screens/main-screen'
 import AboutScreen from './screens/about-screen'
 import Sidebar from './components/sidebar'
 import SetupScreen from './screens/setup-screen'
-import { authenticadedFetch, getURLForCPT } from './utils/wpapi';
+import { authenticadedFetch, getURLForCPT, getWPAdminUrlForPost } from './utils/wpapi';
 import { err } from 'react-native-svg';
 import * as Calendar from 'expo-calendar';
 
@@ -282,6 +282,8 @@ const App = () => {
                     Calendar.createReminderAsync( terms[0].meta.reminders_calendar, {
                       title: todo.title.raw,
                       completed: ( todo.status === 'trash' ),
+                      url: getWPAdminUrlForPost( data, todo.id ),
+                      notes: todo.excerpt.raw
                     } ).then( newReminderId => {
                       authenticadedFetch( url + '/' + todo.id, {
                         method: 'POST',
@@ -299,6 +301,9 @@ const App = () => {
                   const changes = {};
                   if ( reminder.title !== todo.title.raw ) {
                     changes.title = todo.title.raw;
+                  }
+                  if ( reminder.notes !== todo.excerpt.raw ) {
+                    changes.notes = todo.excerpt.raw;
                   }
                   if( reminder.completed !== ( todo.status === 'trash' ) ) {
                     changes.completed = ( todo.status === 'trash' );
@@ -326,6 +331,9 @@ const App = () => {
               // Adding reminders to the list.
               Calendar.createReminderAsync( reminders_list_id, {
                 title: todo.title.raw,
+                completed: ( todo.status === 'trash' ),
+                url: getWPAdminUrlForPost( data, todo.id ),
+                notes: todo.excerpt.raw
               } ).catch( err => {
                 console.log( 'Error creating reminder', err );
               } ).then( reminder_id => {
