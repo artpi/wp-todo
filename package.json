@@ -1,69 +1,72 @@
 {
-  "name": "wp-todo",
-  "description": "A TODO App using WordPress as a backend",
-  "version": "0.0.1",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:artpi/wp-todo.git"
-  },
-  "author": {
-    "name": "Artpi",
-    "url": "https://piszek.com"
-  },
-  "license": "MIT",
-  "keywords": [
-    "react-native",
-    "wordpress",
-    "todo"
-  ],
-  "main": "node_modules/expo/AppEntry.js",
-  "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "eject": "expo eject",
-    "expo": "expo"
-  },
-  "dependencies": {
-    "@react-native-async-storage/async-storage": "^1.21.0",
-    "@react-native-picker/picker": "2.6.1",
-    "@react-navigation/drawer": "^6.1.8",
-    "@react-navigation/native": "^6.0.6",
-    "base-64": "^1.0.0",
-    "expo-calendar": "~12.2.1",
-    "expo-checkbox": "^2.7.0",
-    "expo-dev-client": "~3.3.8",
-    "moti": "^0.16.1",
-    "native-base": "^3.2.1",
-    "normalize-css-color": "^1.0.2",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "react-native": "0.73.4",
-    "react-native-checkbox-reanimated": "^0.1.0",
-    "react-native-gesture-handler": "~2.14.0",
-    "react-native-reanimated": "~3.6.2",
-    "react-native-safe-area-context": "4.8.2",
-    "react-native-screens": "~3.29.0",
-    "react-native-svg": "14.1.0",
-    "react-native-web": "~0.19.6",
-    "react-stately": "^3.17.0",
-    "shortid": "^2.2.16",
-    "styled-components": "^5.3.3",
-    "styled-system": "^5.1.5"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.12.9",
-    "@expo/metro-runtime": "~3.1.3",
-    "@types/react": "~18.2.45",
-    "@types/react-native": "~0.64.12",
-    "@types/shortid": "^0.0.29",
-    "expo": "^50.0.6",
-    "expo-linking": "~6.2.2",
-    "expo-modules-core": "~1.11.8",
-    "expo-status-bar": "~1.11.1",
-    "prettier": "^2.4.1",
-    "typescript": "^5.3.0"
-  },
-  "private": true
+	"name": "wp-todo",
+	"description": "A TODO App using WordPress as a backend",
+	"version": "0.0.1",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:artpi/wp-todo.git"
+	},
+	"author": {
+		"name": "Artpi",
+		"url": "https://piszek.com"
+	},
+	"license": "MIT",
+	"keywords": [
+		"react-native",
+		"wordpress",
+		"todo"
+	],
+	"main": "node_modules/expo/AppEntry.js",
+	"scripts": {
+		"start": "expo start",
+		"android": "expo start --android",
+		"ios": "expo start --ios",
+		"web": "expo start --web",
+		"eject": "expo eject",
+		"expo": "expo",
+		"format": "prettier --write ."
+	},
+	"prettier": "@wordpress/prettier-config",
+	"dependencies": {
+		"@react-native-async-storage/async-storage": "^1.21.0",
+		"@react-native-picker/picker": "2.6.1",
+		"@react-navigation/drawer": "^6.1.8",
+		"@react-navigation/native": "^6.0.6",
+		"base-64": "^1.0.0",
+		"expo-calendar": "~12.2.1",
+		"expo-checkbox": "^2.7.0",
+		"expo-dev-client": "~3.3.8",
+		"moti": "^0.16.1",
+		"native-base": "^3.2.1",
+		"normalize-css-color": "^1.0.2",
+		"react": "^18.0.0",
+		"react-dom": "^18.0.0",
+		"react-native": "0.73.4",
+		"react-native-checkbox-reanimated": "^0.1.0",
+		"react-native-gesture-handler": "~2.14.0",
+		"react-native-reanimated": "~3.6.2",
+		"react-native-safe-area-context": "4.8.2",
+		"react-native-screens": "~3.29.0",
+		"react-native-svg": "14.1.0",
+		"react-native-web": "~0.19.6",
+		"react-stately": "^3.17.0",
+		"shortid": "^2.2.16",
+		"styled-components": "^5.3.3",
+		"styled-system": "^5.1.5"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.12.9",
+		"@expo/metro-runtime": "~3.1.3",
+		"@types/react": "~18.2.45",
+		"@types/react-native": "~0.64.12",
+		"@types/shortid": "^0.0.29",
+		"@wordpress/prettier-config": "^4.4.0",
+		"expo": "^50.0.6",
+		"expo-linking": "~6.2.2",
+		"expo-modules-core": "~1.11.8",
+		"expo-status-bar": "~1.11.1",
+		"prettier": "npm:wp-prettier@3.0.3",
+		"typescript": "^5.3.0"
+	},
+	"private": true
 }
