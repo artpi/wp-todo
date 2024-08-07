@@ -3,7 +3,6 @@ import { Icon, VStack, useColorModeValue, Fab, FormControl, Input, Select } from
 import { AntDesign } from '@expo/vector-icons'
 import AnimatedColorBox from '../components/animated-color-box'
 import TaskList from '../components/task-list'
-import shortid from 'shortid'
 import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
 import { Linking } from 'react-native'
@@ -11,7 +10,7 @@ import { getWPAdminUrlForPost, authenticadedFetch } from '../utils/wpapi'
 import { useDataManagerContext } from '../utils/data-manager';
 
 export default function MainScreen( { route } ) {
-  const { data, todos, setTodos, sync, login, pass, setData } = useDataManagerContext();
+  const { data, todos, sync, saveMappedIosRemindersList, handleToggleTaskItem, handleChangeTaskItemSubject, createEmptyTodo } = useDataManagerContext();
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   //console.log(data.taxonomy_terms);
   let title = 'All todos';
@@ -23,30 +22,6 @@ export default function MainScreen( { route } ) {
     filter = term.id;
   }
 
-  const handleToggleTaskItem = useCallback(item => {
-    setTodos(prevData => {
-      const newData = [...prevData]
-      const index = prevData.indexOf(item)
-      newData[index] = {
-        ...item,
-        done: !item.done,
-        dirty: true
-      }
-      return newData
-    })
-  }, [])
-  const handleChangeTaskItemSubject = useCallback((item, newSubject) => {
-    setTodos( prevData => {
-      const newData = [...prevData]
-      const index = prevData.indexOf(item)
-      newData[index] = {
-        ...item,
-        subject: newSubject,
-        dirty: true
-      }
-      return newData
-    })
-  }, [])
   const handleFinishEditingTaskItem = useCallback(_item => {
     sync();
     setEditingItemId(null)
@@ -73,21 +48,7 @@ export default function MainScreen( { route } ) {
               <Select selectedValue={ term.meta.reminders_calendar || 'no' } minWidth="200" accessibilityLabel="Dont sync" _selectedItem={{
                 bg: "gray.300",
               }} mt={1} onValueChange={ ( value ) => {
-                console.log( 'Selected', value, JSON.stringify( term ) );
-                authenticadedFetch( term._links.self[0].href, {
-                  method: 'POST',
-                  body: JSON.stringify( {
-                    meta: { reminders_calendar: value }
-                  } )
-                }, login, pass ).then( res => {
-                  //setData.
-                  setData( prevData => {
-                    const newTerms = prevData.taxonomy_terms.map( t => ( t.id === term.id ? res : t ) );
-                    const newData = { ...prevData, taxonomy_terms: newTerms };
-                    return newData;
-                  } );
-                } );
-
+                saveMappedIosRemindersList( term, value );
               } }>
                 <Select.Item label={ "Don't Sync" } value={ 'no' } />
                 { data.reminders_calendars && data.reminders_calendars.map( calendar => ( <Select.Item label={ calendar.title } value={ calendar.id } /> ) ) }
@@ -124,22 +85,7 @@ export default function MainScreen( { route } ) {
         colorScheme={useColorModeValue('blue', 'darkBlue')}
         bg={useColorModeValue('blue.500', 'blue.400')}
         onPress={() => {
-          const id = 'new_' + shortid.generate();
-          const newTodo = {
-            id,
-            subject: '',
-            done: false,
-            dirty: true,
-            deleted: false,
-            terms: [],
-          };
-          if( filter && filter > 0) {
-            newTodo.terms.push( filter );
-          }
-          setTodos([
-            newTodo,
-            ...todos
-          ])
+          const id = createEmptyTodo( filter );
           setEditingItemId(id)
         }}
       />

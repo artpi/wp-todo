@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useContext, createContext } from 'rea
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Calendar from 'expo-calendar';
 import { authenticadedFetch, getURLForCPT, getWPAdminUrlForPost, normalizeUrl } from './wpapi';
+import shortid from 'shortid'
 
 export interface DataState {
     connected: boolean;
@@ -66,6 +67,10 @@ interface DataManager {
   posPlugin: number;
   setPosPlugin: React.Dispatch<React.SetStateAction<number>>;
   connectWP: () => void;
+  handleToggleTaskItem: (item: Todo) => void;
+  handleChangeTaskItemSubject: (item: Todo, newSubject: string) => void;
+  createEmptyTodo: (filter: number) => string;
+  saveMappedIosRemindersList: (term: any, value: any) => void;
 }
 
 function createDataManager(): DataManager {
@@ -128,6 +133,68 @@ function createDataManager(): DataManager {
     return authenticadedFetch(url, {}, login, pass);
   }, [login, pass]);
 
+  const handleToggleTaskItem = useCallback(item => {
+    setTodos(prevData => {
+      const newData = [...prevData]
+      const index = prevData.indexOf(item)
+      newData[index] = {
+        ...item,
+        done: !item.done,
+        dirty: true
+      }
+      return newData
+    })
+  }, [])
+
+  const handleChangeTaskItemSubject = useCallback((item, newSubject) => {
+    setTodos( prevData => {
+      const newData = [...prevData]
+      const index = prevData.indexOf(item)
+      newData[index] = {
+        ...item,
+        subject: newSubject,
+        dirty: true
+      }
+      return newData
+    })
+  }, [])
+
+  const createEmptyTodo = useCallback(( filter: number ) => {
+    const id = 'new_' + shortid.generate();
+    const newTodo = {
+      id,
+      subject: '',
+      done: false,
+      dirty: true,
+      deleted: false,
+      terms: [],
+    };
+    if( filter && filter > 0) {
+      newTodo.terms.push( filter );
+    }
+    setTodos( todos => [
+      newTodo,
+      ...todos
+    ])
+    return id;
+  }, [])
+
+  const saveMappedIosRemindersList = useCallback(async ( term, value) => {
+    console.log( 'Selected', value, JSON.stringify( term ) );
+    authenticadedFetch( term._links.self[0].href, {
+      method: 'POST',
+      body: JSON.stringify( {
+        meta: { reminders_calendar: value }
+      } )
+    }, login, pass ).then( res => {
+      //setData.
+      setData( prevData => {
+        const newTerms = prevData.taxonomy_terms.map( t => ( t.id === term.id ? res : t ) );
+        const newData = { ...prevData, taxonomy_terms: newTerms };
+        return newData;
+      } );
+    } );
+  }, [])
   const sync = useCallback(async () => {
     const url = getURLForCPT( data.post_types, data.post_type );
     const cachedData = todos;
@@ -515,6 +582,10 @@ function createDataManager(): DataManager {
     posPlugin,
     setPosPlugin,
     connectWP,
+    handleToggleTaskItem,
+    handleChangeTaskItemSubject,
+    createEmptyTodo,
+    saveMappedIosRemindersList
   };
 }
 

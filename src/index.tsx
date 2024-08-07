@@ -13,7 +13,6 @@ const App: React.FC = () => {
     data,
   } = useDataManagerContext();
 
-  console.log( 'DATA', data );
   if (!data.connected) {
     return (
       <SetupScreen/>
