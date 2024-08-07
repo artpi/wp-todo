@@ -6,15 +6,13 @@ import Masthead from '../components/masthead'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeSyntheticEvent, TextInputChangeEventData, ActivityIndicator, View } from 'react-native'
 import {Picker} from '@react-native-picker/picker';
-import { authenticadedFetch, normalizeUrl } from '../utils/wpapi';
+import { normalizeUrl } from '../utils/wpapi';
 import { FontAwesome5, Feather } from '@expo/vector-icons'
 import LinkButton from '../components/link-button'
+import { useDataManagerContext } from '../utils/data-manager';
 
-export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, setPass, data, setData }) {
-
-  const [connecting, setConnecting] = useState(false);
-  const [ posPlugin, setPosPlugin ] = useState( 0 );// 0 - not detected, 1 - detected, 2 - continuing without it.
-  const [err, setErr] = useState('');
+export default function SetupScreen() {
+  const { wpURL, setWPURL, login, setLogin, pass, setPass, data, setData, connecting, connectingError, connectWP, posPlugin, setPosPlugin } = useDataManagerContext();
 
   const pickerStyle = {
     marginLeft: '6%',
@@ -25,93 +23,6 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
     pickerStyle['marginTop'] = -48;
     pickerStyle['marginBottom'] = -48;
   }
-
-  function connectWP( url: string, username: string, password: string ) {
-    //normalize url, add https if not present
-    setConnecting( true );
-    const siteData = fetch( normalizeUrl(url, 'https' ) + `?rest_route=/`)
-    .catch( err => fetch( normalizeUrl(url, 'http' ) + `?rest_route=/`) )
-    .catch( err => {
-      // We are going to deal with special snowflake of WPCOM later.
-      // const host = (new URL( normalizeUrl( url, 'https' ) ) ).hostname;
-      // const wpcomURL = 'https://public-api.wordpress.com/wpcom/v2/sites/' + host + '/';
-      // return fetch( wpcomURL );
-
-      // Could not find proper WP REST API.
-      if ( url.indexOf( '.wordpress.com' ) > -1 ) {
-        return Promise.reject( { message: 'This site is WordPress.com site without plugins. Unfortunately, these sites do not support application passwords.'} );
-      }
-      return Promise.reject( { message: 'I had trouble connecting to REST API on this site.'} );
-    } )
-    .then((response) => response.json())
-    .then( response => {
-        data['site_home'] = response.home;
-        data['site_icon_url'] = response.site_icon_url;
-        data['site_title'] = response.name;
-        setWPURL( response.url );
-        setData( data );
-        return Promise.resolve( response );
-    });
-
-    siteData.then( (site) => authenticadedFetch(
-      site.routes['/wp/v2/users/me']._links.self[0].href,
-      {},
-      username,
-      password
-    ) )
-    .then( response => {
-        console.log( 'USER LOGIN', response.name );
-        data['username'] = response.name;
-        data['gravatar'] = response.avatar_urls['96'];
-
-        setData( data );
-        AsyncStorage.setItem( 'wpurl', url );
-        AsyncStorage.setItem( 'wplogin', username );
-        AsyncStorage.setItem( 'wppass', password );
-        setErr( '' );
-
-        return Promise.resolve( siteData );
-    } )
-    .then( (site) => Promise.all( [
-      authenticadedFetch(
-        site.routes['/wp/v2/types']._links.self[0].href,
-        {},
-        username,
-        password
-      ),
-      authenticadedFetch(
-        site.routes['/wp/v2/taxonomies']._links.self[0].href,
-        {},
-        username,
-        password
-      ),
-    ] ) )
-    .then( response => {
-        console.log( 'POST TYPES', JSON.stringify( Object.values( response[0] ) ));
-        console.log( 'POST TAXONMIES', JSON.stringify( Object.values( response[1] ) ) );
-        let newData ={ post_types: Object.values( response[0] ), taxonomies: response[1] };
-        // Personal OS plugin detected
-        if ( response[0]['todo'] && response[1]['todo_category'] ) {
-          newData['post_type'] = 'todo';
-          newData['taxonomy'] = 'todo_category';
-          setPosPlugin( 1 );
-        } else {
-          newData['post_type'] = 'post';
-        }
-
-        return Promise.resolve( newData );
-        
-    } )
-    .then( ( newData ) => {
-      setData( oldData => ( { ...oldData, ...newData } ) );
-      setConnecting( false );
-    } )
-    .catch( error => {
-      setErr( error.message );
-      setConnecting( false );
-    }  );
-    
-}
 
   const handleChangeWPURL = useCallback(
     (e: NativeSyntheticEvent<TextInputChangeEventData>) => {
@@ -214,11 +125,11 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
           { wpURL && (
             <Link marginLeft={ '6' } alignContent={ 'center' } href={ normalizeUrl(wpURL) + `/wp-admin/authorize-application.php?app_name=wp-todo` }>Do not use your regular password. Create a new "application" password here</Link>
           ) }
-            { err && ( <Text
+            { connectingError && ( <Text
               alignContent={ 'center' }
               margin={ '3' }
               color={ 'red.500'}
-            >{ err }</Text> ) }
+            >{ connectingError }</Text> ) }
 
             <Button
               colorScheme="secondary"
@@ -230,9 +141,7 @@ export default function SetupScreen( { wpURL, login, pass, setWPURL, setLogin, s
               leftIcon={
                 <FontAwesome5 name="check-circle" size={24} color={'white'} opacity={0.5} />
               }
-              onPress={ () => {
-                  connectWP( wpURL, login, pass );
-              }}
+              onPress={ connectWP }
             >
               { "Connect" }
             </Button>

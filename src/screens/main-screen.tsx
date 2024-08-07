@@ -8,14 +8,16 @@ import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
 import { Linking } from 'react-native'
 import { getWPAdminUrlForPost, authenticadedFetch } from '../utils/wpapi'
+import { useDataManagerContext } from '../utils/data-manager';
 
-export default function MainScreen( { todos, data, setTodos, refreshing, sync, route, login, pass, setData } ) {
+export default function MainScreen( { route } ) {
+  const { data, todos, setTodos, sync, login, pass, setData } = useDataManagerContext();
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   //console.log(data.taxonomy_terms);
   let title = 'All todos';
   let filter = 0;
   let term = null;
-  if( route.params?.term  && data && data.taxonomy_terms ) {
+  if( route.params?.term && data && data.taxonomy_terms ) {
     term = data.taxonomy_terms.find( t => t.slug === route.params.term );
     title = term.name;
     filter = term.id;
@@ -105,10 +107,7 @@ export default function MainScreen( { todos, data, setTodos, refreshing, sync, r
         pt="20px"
       >
         <TaskList
-          refresh={ () => sync() }
           filter={ filter }
-          refreshing={ refreshing }
-          data={todos}
           onToggleItem={handleToggleTaskItem}
           onChangeSubject={handleChangeTaskItemSubject}
           onFinishEditing={handleFinishEditingTaskItem}

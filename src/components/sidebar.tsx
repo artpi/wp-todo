@@ -21,9 +21,11 @@ import { Feather } from '@expo/vector-icons'
 import MenuButton from './menu-button'
 import * as Linking from 'expo-linking'
 import { getWPAdminUrlForCPT } from '../utils/wpapi'
+import { useDataManagerContext } from '../utils/data-manager';
 
 const Sidebar = (props: DrawerContentComponentProps) => {
-  const { state, navigation, data, logOut, wpURL, todos } = props;
+  const { state, navigation } = props;
+  const { data, logOut, wpURL, todos } = useDataManagerContext();
   const currentRoute = state.routeNames[state.index]
 
   const [ showEmpty, setShowEmpty ] = useState( false );

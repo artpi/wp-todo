@@ -7,38 +7,30 @@ import {
 import { RefreshControl } from 'react-native'
 import TaskItem from './task-item'
 import { makeStyledComponent } from '../utils/styled'
+import { useDataManagerContext, Todo } from '../utils/data-manager';
 
 const StyledView = makeStyledComponent(View)
 const StyledScrollView = makeStyledComponent(ScrollView)
 
-interface TaskItemData {
-  id: string
-  subject: string
-  done: boolean
-  deleted: boolean
-  dirty: boolean
-  terms: Array<number>
-}
-
 interface TaskListProps {
-  data: Array<TaskItemData>
+  filter: string | number | null
   editingItemId: string | null
-  onToggleItem: (item: TaskItemData) => void
-  onChangeSubject: (item: TaskItemData, newSubject: string) => void
-  onFinishEditing: (item: TaskItemData) => void
-  onPressLabel: (item: TaskItemData) => void
-  onRemoveItem: (item: TaskItemData) => void
+  onToggleItem: (item: Todo) => void
+  onChangeSubject: (item: Todo, newSubject: string) => void
+  onFinishEditing: (item: Todo) => void
+  onPressLabel: (item: Todo) => void
+  onRemoveItem: (item: Todo) => void
 }
 
 interface TaskItemProps
   extends Pick<PanGestureHandlerProps, 'simultaneousHandlers'> {
-  data: TaskItemData
+  data: Todo
   isEditing: boolean
-  onToggleItem: (item: TaskItemData) => void
-  onChangeSubject: (item: TaskItemData, newSubject: string) => void
-  onFinishEditing: (item: TaskItemData) => void
-  onPressLabel: (item: TaskItemData) => void
-  onRemove: (item: TaskItemData) => void
+  onToggleItem: (item: Todo) => void
+  onChangeSubject: (item: Todo, newSubject: string) => void
+  onFinishEditing: (item: Todo) => void
+  onPressLabel: (item: Todo) => void
+  onRemove: (item: Todo) => void
 }
 
 export const AnimatedTaskItem = (props: TaskItemProps) => {
@@ -105,11 +97,10 @@ export const AnimatedTaskItem = (props: TaskItemProps) => {
 }
 
 export default function TaskList(props: TaskListProps) {
+  const { todos, refreshing, sync } = useDataManagerContext();
+  console.log( 'TODOZ', todos);
   const {
-    refresh,
-    data,
     filter,
-    refreshing,
     editingItemId,
     onToggleItem,
     onChangeSubject,
@@ -124,12 +115,12 @@ export default function TaskList(props: TaskListProps) {
     <StyledScrollView ref={refScrollView} w="full" refreshControl = {
       <RefreshControl
         refreshing={refreshing}
-        onRefresh={ () => { refresh() } }
+        onRefresh={ sync }
       />
     
     }>
       <AnimatePresence>
-        {data.filter( item => ! item.deleted ).filter( item => ( ! filter || ! item.terms || ( item.terms.indexOf( filter ) !== -1 ) ) ).map(item => (
+        {todos.filter( item => ! item.deleted ).filter( item => ( ! filter || ! item.terms || ( item.terms.indexOf( filter ) !== -1 ) ) ).map(item => (
           <AnimatedTaskItem
             key={item.id}
             data={item}
