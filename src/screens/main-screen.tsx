@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { Icon, VStack, useColorModeValue, Fab } from 'native-base'
+import { Icon, VStack, useColorModeValue, Fab, FormControl, Input, Select } from 'native-base'
 import { AntDesign } from '@expo/vector-icons'
 import AnimatedColorBox from '../components/animated-color-box'
 import TaskList from '../components/task-list'
@@ -7,15 +7,16 @@ import shortid from 'shortid'
 import Masthead from '../components/masthead'
 import NavBar from '../components/navbar'
 import { Linking } from 'react-native'
-import { getWPAdminUrlForPost } from '../utils/wpapi'
+import { getWPAdminUrlForPost, authenticadedFetch } from '../utils/wpapi'
 
-export default function MainScreen( { todos, data, setTodos, refreshing, sync, route } ) {
+export default function MainScreen( { todos, data, setTodos, refreshing, sync, route, login, pass, setData } ) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
-  console.log(data.taxonomy_terms);
+  //console.log(data.taxonomy_terms);
   let title = 'All todos';
   let filter = 0;
+  let term = null;
   if( route.params?.term  && data && data.taxonomy_terms ) {
-    const term = data.taxonomy_terms.find( t => t.slug === route.params.term );
+    term = data.taxonomy_terms.find( t => t.slug === route.params.term );
     title = term.name;
     filter = term.id;
   }
@@ -33,7 +34,7 @@ export default function MainScreen( { todos, data, setTodos, refreshing, sync, r
     })
   }, [])
   const handleChangeTaskItemSubject = useCallback((item, newSubject) => {
-    setTodos(prevData => {
+    setTodos( prevData => {
       const newData = [...prevData]
       const index = prevData.indexOf(item)
       newData[index] = {
@@ -64,6 +65,33 @@ export default function MainScreen( { todos, data, setTodos, refreshing, sync, r
       <Masthead
         title= { title }
         image={require('../assets/masthead-main.png')}
+        modal = { filter && ( <>
+            <FormControl>
+              <FormControl.Label>{ "Sync with calendar" }</FormControl.Label>
+              <Select selectedValue={ term.meta.reminders_calendar || 'no' } minWidth="200" accessibilityLabel="Dont sync" _selectedItem={{
+                bg: "gray.300",
+              }} mt={1} onValueChange={ ( value ) => {
+                console.log( 'Selected', value, JSON.stringify( term ) );
+                authenticadedFetch( term._links.self[0].href, {
+                  method: 'POST',
+                  body: JSON.stringify( {
+                    meta: { reminders_calendar: value }
+                  } )
+                }, login, pass ).then( res => {
+                  //setData.
+                  setData( prevData => {
+                    const newTerms = prevData.taxonomy_terms.map( t => ( t.id === term.id ? res : t ) );
+                    const newData = { ...prevData, taxonomy_terms: newTerms };
+                    return newData;
+                  } );
+                } );
+
+              } }>
+                <Select.Item label={ "Don't Sync" } value={ 'no' } />
+                { data.reminders_calendars && data.reminders_calendars.map( calendar => ( <Select.Item label={ calendar.title } value={ calendar.id } /> ) ) }
+                </Select>
+            </FormControl>
+        </> ) }
       >
         <NavBar />
       </Masthead>

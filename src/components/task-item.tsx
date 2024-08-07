@@ -104,6 +104,7 @@ const TaskItem = (props: Props) => {
               value={ subject }
               isChecked={isDone}
               isDisabled={true}
+              aria-label={ "Complete " + subject }
             />
         </Box>
         </Pressable>
