@@ -7,13 +7,36 @@ import AboutScreen from './screens/about-screen'
 import Sidebar from './components/sidebar'
 import SetupScreen from './screens/setup-screen'
 import { authenticadedFetch, getURLForCPT, getWPAdminUrlForPost } from './utils/wpapi';
-import { err } from 'react-native-svg';
 import * as Calendar from 'expo-calendar';
 
+interface DataState {
+  connected: boolean;
+  loggedin: boolean;
+  site_title: string;
+  site_home: string;
+  site_icon_url: string;
+  post_types: any[];
+  taxonomies: Record<string, any>;
+  post_type: string;
+  taxonomy: string;
+  taxonomy_terms: Record<string, any>;
+  username: string;
+  gravatar: string;
+  reminders_calendars: any[];
+}
+
+interface Todo {
+  id: string | number;
+  subject: string;
+  done: boolean;
+  deleted?: boolean;
+  dirty: boolean;
+  terms?: number[];
+}
 
 const Drawer = createDrawerNavigator()
 
-const initialData = {
+const initialData: DataState = {
   connected: false,
   loggedin: false,
   site_title: '',
@@ -29,13 +52,13 @@ const initialData = {
   reminders_calendars: [],
 }
 
-const App = () => {
-  const [data, setData] = useState(initialData)
-  const [todos, setTodos] = useState([])
-  const [wpURL, setWPURL] = useState('')
-  const [login, setLogin] = useState('')
-  const [ refreshing, setRefreshing ] = useState( false )
-  const [pass, setPass] = useState('')
+const App: React.FC = () => {
+  const [data, setData] = useState<DataState>(initialData)
+  const [todos, setTodos] = useState<Todo[]>([])
+  const [wpURL, setWPURL] = useState<string>('')
+  const [login, setLogin] = useState<string>('')
+  const [ refreshing, setRefreshing ] = useState<boolean>( false )
+  const [pass, setPass] = useState<string>('')
   const [remindersPermission, requestRemindersPermission] = Calendar.useRemindersPermissions();
 
   useEffect(() => {
@@ -59,8 +82,8 @@ const App = () => {
     ];
 
     Promise.all( promises ).then( ([url, login, pass, savedconfig, savedtodos ]) => {
-      let savedConfigObject = {};
-      let savedTodosObject = [];
+      let savedConfigObject: DataState = initialData;
+      let savedTodosObject: Todo[] = [];
       if (url) {
         setWPURL(url);
       }
@@ -94,20 +117,20 @@ const App = () => {
     }
   }, [todos]);
 
-  function loadTaxonomyTerms( data, taxonomy ) {
+  function loadTaxonomyTerms(data: DataState, taxonomy: string): Promise<any> {
     const url = data.taxonomies[taxonomy]._links['wp:items'][0].href + '?per_page=100';
     console.log( 'LOADING TAXONOMY TERMS', url );
     return authenticadedFetch( url, {}, login, pass );
   }
 
-  function sync( cachedData: any, data: any, login, pass ) {
+  function sync(cachedData: Todo[], data: DataState, login: string, pass: string): void {
     const url = getURLForCPT( data.post_types, data.post_type );
 
     if( ! url ) {
       console.warn( 'Bailing on sync, no URL to update CPT found.');
       return;
     }
-    let updatePromises = [];
+    let updatePromises: Promise<any>[] = [];
     if( cachedData ) {
       console.log( 'Cached Data', JSON.stringify(cachedData) );
       const dataToSync = cachedData.filter( todo => todo.dirty ).filter( todo => todo.subject.length > 0 );
@@ -183,11 +206,11 @@ const App = () => {
       } );
 
       // Pull latest todos.
-      function getPagePromise( page, status, previousData ) {
+      function getPagePromise( page: number, status: string, previousData: Todo[] ): Promise<Todo[]> {
         const modifiedURL = new URL( url );
         modifiedURL.searchParams.set( 'per_page', '100' );
         modifiedURL.searchParams.set( 'context', 'edit' );
-        modifiedURL.searchParams.set( 'page', page );
+        modifiedURL.searchParams.set( 'page', page.toString() );
         modifiedURL.searchParams.set( 'status', status );
         return authenticadedFetch( modifiedURL.toString() , {}, login, pass )
         .then( response => {
@@ -363,7 +386,7 @@ const App = () => {
     } );
   }
 
-  function logOut() {
+  function logOut(): void {
     setData( initialData );
     setTodos( [] );
     setWPURL('');
