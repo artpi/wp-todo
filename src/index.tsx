@@ -9,39 +9,28 @@ import SetupScreen from './screens/setup-screen';
 const Drawer = createDrawerNavigator();
 
 const App: React.FC = () => {
-  const {
-    data,
-  } = useDataManagerContext();
+	const { data } = useDataManagerContext();
 
-  if (!data.connected) {
-    return (
-      <SetupScreen/>
-    );
-  }
+	if ( ! data.connected ) {
+		return <SetupScreen />;
+	}
 
-  return (
-    <Drawer.Navigator
-      initialRouteName="Main"
-      drawerContent={props => (
-        <Sidebar {...props} />
-      )}
-      screenOptions={{
-        headerShown: false,
-        drawerType: 'back',
-        overlayColor: '#00000000',
-      }}
-    >
-      <Drawer.Screen name="Main">
-        {props => (
-          <MainScreen
-            key="main"
-            {...props}
-          />
-        )}
-      </Drawer.Screen>
-      <Drawer.Screen name="About" component={AboutScreen} />
-    </Drawer.Navigator>
-  );
+	return (
+		<Drawer.Navigator
+			initialRouteName="Main"
+			drawerContent={ ( props ) => <Sidebar { ...props } /> }
+			screenOptions={ {
+				headerShown: false,
+				drawerType: 'back',
+				overlayColor: '#00000000',
+			} }
+		>
+			<Drawer.Screen name="Main">
+				{ ( props ) => <MainScreen key="main" { ...props } /> }
+			</Drawer.Screen>
+			<Drawer.Screen name="About" component={ AboutScreen } />
+		</Drawer.Navigator>
+	);
 };
 
 export default App;
