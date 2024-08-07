@@ -113,9 +113,6 @@ function createDataManager(): DataManager {
     if (savedConfig) {
       savedConfigObject = JSON.parse(savedConfig);
       setData( savedConfigObject );
-      console.log( 'SAVED CONFIG', savedConfigObject, data );
-    //   const ret = setData(() => savedConfigObject);
-    //   console.log( 'SAVED CONFIG', savedConfigObject, data, ret );
     }
 
     if (savedTodos) {
@@ -187,7 +184,6 @@ function createDataManager(): DataManager {
         meta: { reminders_calendar: value }
       } )
     }, login, pass ).then( res => {
-      //setData.
       setData( prevData => {
         const newTerms = prevData.taxonomy_terms.map( t => ( t.id === term.id ? res : t ) );
         const newData = { ...prevData, taxonomy_terms: newTerms };
@@ -262,7 +258,6 @@ function createDataManager(): DataManager {
       // Pull taxonomies.
       loadTaxonomyTerms( data, data.taxonomy ).then( response => {
         setData( prevData => {
-          //console.log( 'TERMS', JSON.stringify(response, null, 2) );
           const newData = { ...prevData, taxonomy_terms: response };
           AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
           return newData;
@@ -561,7 +556,6 @@ function createDataManager(): DataManager {
     AsyncStorage.removeItem('todos');
   }, []);
 
-  console.log( 'DATA from the hook', data );
   return {
     data,
     setData,
