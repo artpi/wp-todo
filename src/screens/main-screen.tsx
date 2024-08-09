@@ -17,7 +17,7 @@ import { Linking } from 'react-native';
 import { getWPAdminUrlForPost, authenticadedFetch } from '../utils/wpapi';
 import { useDataManagerContext } from '../utils/data-manager';
 
-export default function MainScreen( { route } ) {
+export default function MainScreen( { route, navigation } ) {
 	const {
 		data,
 		todos,
@@ -121,6 +121,7 @@ export default function MainScreen( { route } ) {
 				pt="20px"
 			>
 				<TaskList
+					navigation={ navigation }
 					filter={ filter }
 					onToggleItem={ handleToggleTaskItem }
 					onChangeSubject={ handleChangeTaskItemSubject }

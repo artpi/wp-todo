@@ -8,6 +8,7 @@ import { RefreshControl } from 'react-native';
 import TaskItem from './task-item';
 import { makeStyledComponent } from '../utils/styled';
 import { useDataManagerContext, Todo } from '../utils/data-manager';
+import { Badge, Pressable } from 'native-base';
 
 const StyledView = makeStyledComponent( View );
 const StyledScrollView = makeStyledComponent( ScrollView );
@@ -31,6 +32,7 @@ interface TaskItemProps
 	onFinishEditing: ( item: Todo ) => void;
 	onPressLabel: ( item: Todo ) => void;
 	onRemove: ( item: Todo ) => void;
+	terms: Element[];
 }
 
 export const AnimatedTaskItem = ( props: TaskItemProps ) => {
@@ -43,6 +45,7 @@ export const AnimatedTaskItem = ( props: TaskItemProps ) => {
 		onFinishEditing,
 		onPressLabel,
 		onRemove,
+		terms,
 	} = props;
 	const handleToggleCheckbox = useCallback( () => {
 		onToggleItem( data );
@@ -85,6 +88,7 @@ export const AnimatedTaskItem = ( props: TaskItemProps ) => {
 				simultaneousHandlers={ simultaneousHandlers }
 				subject={ data.subject }
 				isDone={ data.done }
+				terms={ terms }
 				isEditing={ isEditing }
 				onToggleCheckbox={ handleToggleCheckbox }
 				onChangeSubject={ handleChangeSubject }
@@ -96,9 +100,20 @@ export const AnimatedTaskItem = ( props: TaskItemProps ) => {
 	);
 };
 
+function TermBadge( { term, navigation } ) {
+	return (
+		<Pressable onPress={ () => navigation.navigate( 'Main', { term: term.slug } ) }>
+			<Badge colorScheme="info" variant="outline" rounded="full">
+				{ term.name }
+			</Badge>
+		</Pressable>
+	);
+}
+
 export default function TaskList( props: TaskListProps ) {
-	const { todos, refreshing, sync } = useDataManagerContext();
+	const { todos, refreshing, sync, data } = useDataManagerContext();
 	const {
+		navigation,
 		filter,
 		editingItemId,
 		onToggleItem,
@@ -130,6 +145,9 @@ export default function TaskList( props: TaskListProps ) {
 						<AnimatedTaskItem
 							key={ item.id }
 							data={ item }
+							terms={
+								item.terms ? item.terms.filter( term => ( term !== filter ) ).map( ( term ) => data.taxonomy_terms.find( ( t ) => t.id === term ) ).map( t => ( <TermBadge term={ t } navigation={ navigation } /> ) ) : []
+							}
 							simultaneousHandlers={ refScrollView }
 							isEditing={ item.id === editingItemId }
 							onToggleItem={ onToggleItem }

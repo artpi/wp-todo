@@ -10,11 +10,13 @@ import {
 	Icon,
 	Input,
 	useToken,
+	Checkbox,
+	Badge,
+	VStack,
 } from 'native-base';
 import AnimatedTaskLabel from './animated-task-label';
 import SwipableView from './swipable-view';
 import { Feather } from '@expo/vector-icons';
-import { Checkbox } from 'native-base';
 
 interface Props extends Pick< PanGestureHandlerProps, 'simultaneousHandlers' > {
 	isEditing: boolean;
@@ -25,6 +27,7 @@ interface Props extends Pick< PanGestureHandlerProps, 'simultaneousHandlers' > {
 	onChangeSubject?: ( subject: string ) => void;
 	onFinishEditing?: () => void;
 	subject: string;
+	terms: string[];
 }
 
 const TaskItem = ( props: Props ) => {
@@ -37,6 +40,7 @@ const TaskItem = ( props: Props ) => {
 		onRemove,
 		onChangeSubject,
 		onFinishEditing,
+		terms,
 		simultaneousHandlers,
 	} = props;
 
@@ -130,17 +134,22 @@ const TaskItem = ( props: Props ) => {
 					/>
 				) : (
 					<Pressable onPress={ onPressLabel }>
-						<Text
-							strikeThrough={ isDone }
-							numberOfLines={ 3 }
-							fontSize={ 19 }
-							isTruncated={ false }
-							ellipsizeMode="tail"
-							maxW={ 320 }
-							color={ isDone ? doneTextColor : activeTextColor }
-						>
-							{ subject }
-						</Text>
+						<VStack>
+							<Text
+								strikeThrough={ isDone }
+								numberOfLines={ 3 }
+								fontSize={ 19 }
+								isTruncated={ false }
+								ellipsizeMode="tail"
+								maxW={ 320 }
+								color={ isDone ? doneTextColor : activeTextColor }
+							>
+								{ subject }
+							</Text>
+							<HStack space={ 1 }>
+								{ terms }								
+							</HStack>
+						</VStack>
 					</Pressable>
 				) }
 			</HStack>
