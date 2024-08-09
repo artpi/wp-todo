@@ -62,3 +62,34 @@ export function normalizeUrl( url: string, protocol: string = 'http' ): string {
 	}
 	return url;
 }
+
+export function getPagePromise(
+  url: string,
+  page: number,
+  status: string | null,
+  previousData: [],
+  login: string,
+  pass: string
+): Promise<[]> {
+  const modifiedURL = new URL( url );
+  modifiedURL.searchParams.set( 'per_page', '100' );
+  modifiedURL.searchParams.set( 'context', 'edit' );
+  modifiedURL.searchParams.set( 'page', page.toString() );
+  if ( status ) {
+    modifiedURL.searchParams.set( 'status', status );
+  }
+  return authenticadedFetch(
+    modifiedURL.toString(),
+    {},
+    login,
+    pass
+  ).then( ( response ) => {
+    const data = previousData.concat( response );
+    if ( response.length < 100 ) {
+      // All results
+      return Promise.resolve( data );
+    } else {
+      return getPagePromise( url, page + 1, status, data, login, pass );
+    }
+  } );
+}

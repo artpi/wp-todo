@@ -98,7 +98,6 @@ export const AnimatedTaskItem = ( props: TaskItemProps ) => {
 
 export default function TaskList( props: TaskListProps ) {
 	const { todos, refreshing, sync } = useDataManagerContext();
-	console.log( 'TODOZ', todos );
 	const {
 		filter,
 		editingItemId,

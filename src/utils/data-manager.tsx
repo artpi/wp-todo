@@ -6,14 +6,26 @@ import {
 	createContext,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Calendar from 'expo-calendar';
 import {
 	authenticadedFetch,
 	getURLForCPT,
-	getWPAdminUrlForPost,
 	normalizeUrl,
+    getPagePromise,
 } from './wpapi';
 import shortid from 'shortid';
+import { getRemindersCalendars, pushRemindersToWP } from './ios-reminders';
+
+export interface StoredTodo{
+    title: {
+        raw: string;
+    };
+    excerpt: {
+        raw: string;
+    };
+    status: 'publish' | 'private' | 'trash';
+    id: number;
+    meta: Record< string, any >;
+}
 
 export interface DataState {
 	connected: boolean;
@@ -38,6 +50,24 @@ export interface Todo {
 	deleted?: boolean;
 	dirty: boolean;
 	terms?: number[];
+    meta?: Record< string, any >;
+}
+
+function getPayload( todo: Partial<Todo>, taxonomy: string ) {
+    const newData: Record< string, any > = {};
+    if ( todo.hasOwnProperty( 'subject' ) ) {
+        newData.title = todo.subject;
+    }
+    if ( todo.hasOwnProperty( 'done' ) ) {
+        newData.status = todo.done ? 'trash' : 'private';
+    }
+    if ( todo.hasOwnProperty( 'meta' ) ) {
+        newData.meta = todo.meta;
+    }
+    if ( todo.hasOwnProperty( 'terms' ) ) {
+        newData[ taxonomy ] = todo.terms;
+    }
+    return newData;
 }
 
 const initialData: DataState = {
@@ -103,6 +133,62 @@ function createDataManager(): DataManager {
 		}
 	}, [ todos ] );
 
+
+    function pushTodoToWP( todo: Partial<Todo> ) {
+        const url = getURLForCPT( data.post_types, data.post_type ) || '';
+    	if ( todo.deleted || todo.done ) {
+            return authenticadedFetch(
+                url + '/' + todo.id,
+                {
+                    method: 'DELETE',
+                },
+                login,
+                pass
+            );
+        } else if (
+            typeof todo.id === 'string' &&
+            todo.id.substring( 0, 3 ) === 'new'
+        ) {
+            const payload = getPayload( todo, data.taxonomy );
+            // If there is inbox
+            if ( data.taxonomy && data.taxonomy_terms ) {
+                payload[ data.taxonomy ] = [];
+                if ( todo.terms && todo.terms.length > 0 ) {
+                    payload[ data.taxonomy ] = todo.terms;
+                } else {
+                    const inbox = data.taxonomy_terms.find(
+                        ( term ) => term.slug === 'inbox'
+                    );
+                    if ( inbox ) {
+                        payload[ data.taxonomy ].push( inbox.id );
+                    }
+                }
+            }
+            return authenticadedFetch(
+                url,
+                {
+                    method: 'POST',
+                    body: JSON.stringify( payload ),
+                },
+                login,
+                pass
+            );
+        } else if ( todo.id ) {
+            // check for changes.
+            const newData = getPayload( todo, data.taxonomy );
+            console.log( 'Pushing todo to WP', todo.id, JSON.stringify( newData ) );
+            return authenticadedFetch(
+                url + '/' + todo.id,
+                {
+                    method: 'POST',
+                    body: JSON.stringify( newData ),
+                },
+                login,
+                pass
+            );
+        }
+    }
+
 	const loadStoredData = async () => {
 		const [ url, storedLogin, storedPass, savedConfig, savedTodos ] =
 			await Promise.all( [
@@ -131,7 +217,7 @@ function createDataManager(): DataManager {
 		}
 
 		if ( url && storedLogin && storedPass && savedConfigObject.connected ) {
-			sync();
+            sync();
 		}
 	};
 
@@ -142,7 +228,7 @@ function createDataManager(): DataManager {
 				'?per_page=100';
 			return authenticadedFetch( url, {}, login, pass );
 		},
-		[ login, pass ]
+		[ login, pass, data ]
 	);
 
 	const handleToggleTaskItem = useCallback( ( item ) => {
@@ -210,91 +296,27 @@ function createDataManager(): DataManager {
 			} );
 		} );
 	}, [] );
+
+    // This is the main sync function.
 	const sync = useCallback( async () => {
 		const url = getURLForCPT( data.post_types, data.post_type );
 		const cachedData = todos;
 
-		if ( ! url ) {
-			console.warn( 'Bailing on sync, no URL to update CPT found.' );
+		if ( ! data.connected || ! url ) {
+			console.warn( 'Bailing on sync, not connected' );
 			return;
 		}
+        // Sync step 1: Get all the "dirty" todos and sync them to the server.
 		let updatePromises: Promise< any >[] = [];
 		if ( cachedData ) {
-			console.log( 'Cached Data', JSON.stringify( cachedData ) );
 			const dataToSync = cachedData
 				.filter( ( todo ) => todo.dirty )
 				.filter( ( todo ) => todo.subject.length > 0 );
-			console.log( 'Trigggering sync', JSON.stringify( dataToSync ) );
-
-			updatePromises = dataToSync.map( ( todo ) => {
-				if ( todo.deleted || todo.done ) {
-					return authenticadedFetch(
-						url + '/' + todo.id,
-						{
-							method: 'DELETE',
-						},
-						login,
-						pass
-					);
-					// .then( deleteResponse => {
-					//   // When completing tasks, we wanna mark the reminder as completed. This wont work if completed from the network.
-					//   console.log( 'Completed TODO', JSON.stringify( deleteResponse ) );
-					//   if ( deleteResponse.meta && deleteResponse.meta.reminders_id ) {
-					//     return Calendar.updateReminderAsync( deleteResponse.meta.reminders_id, { completed:true } ).then( () => Promise.resolve( deleteResponse ) );
-					//   }
-					//   return Promise.resolve( deleteResponse )
-					// } );
-				} else if (
-					typeof todo.id === 'string' &&
-					todo.id.substring( 0, 3 ) === 'new'
-				) {
-					let payload = {
-						title: todo.subject,
-						status: 'private',
-					};
-					// If there is inbox
-					console.log( 'TAXONOMY', data.taxonomy_terms );
-					if ( data.taxonomy && data.taxonomy_terms ) {
-						payload[ data.taxonomy ] = [];
-						if ( todo.terms && todo.terms.length > 0 ) {
-							payload[ data.taxonomy ] = payload[
-								data.taxonomy
-							].concat( todo.terms );
-						} else {
-							const inbox = data.taxonomy_terms.find(
-								( term ) => term.slug === 'inbox'
-							);
-							if ( inbox ) {
-								payload[ data.taxonomy ].push( inbox.id );
-							}
-						}
-					}
-					return authenticadedFetch(
-						url,
-						{
-							method: 'POST',
-							body: JSON.stringify( payload ),
-						},
-						login,
-						pass
-					);
-				} else {
-					let newData = {
-						title: todo.subject,
-					};
-					return authenticadedFetch(
-						url + '/' + todo.id,
-						{
-							method: 'POST',
-							body: JSON.stringify( newData ),
-						},
-						login,
-						pass
-					);
-				}
-			} );
+			console.log( 'Trigggering sync' );
+			updatePromises = dataToSync.map( pushTodoToWP );
 		}
 
+        // Step 2: Once all the todos are synced, we can pull the data from the server.
 		Promise.all( updatePromises ).then( ( responses ) => {
 			console.log( 'Synced Data', JSON.stringify( responses ) );
 			setRefreshing( true );
@@ -307,63 +329,22 @@ function createDataManager(): DataManager {
 				} );
 			} );
 
-			// Get Calendars for selecting to sync.
-			Calendar.getCalendarsAsync( Calendar.EntityTypes.REMINDER ).then(
-				( response ) => {
-					setData( ( prevData ) => {
-						const newData = {
-							...prevData,
-							reminders_calendars: response,
-						};
-						AsyncStorage.setItem(
-							'config',
-							JSON.stringify( newData )
-						);
-						return newData;
-					} );
-				}
-			);
-
+			// Update iOS reminders calendars if needed.
+            //getRemindersCalendars( setData, AsyncStorage );
 			// Pull latest todos.
-			function getPagePromise(
-				page: number,
-				status: string,
-				previousData: Todo[]
-			): Promise< Todo[] > {
-				const modifiedURL = new URL( url );
-				modifiedURL.searchParams.set( 'per_page', '100' );
-				modifiedURL.searchParams.set( 'context', 'edit' );
-				modifiedURL.searchParams.set( 'page', page.toString() );
-				modifiedURL.searchParams.set( 'status', status );
-				return authenticadedFetch(
-					modifiedURL.toString(),
-					{},
-					login,
-					pass
-				).then( ( response ) => {
-					const data = previousData.concat( response );
-					if ( response.length < 100 ) {
-						// All results
-						console.log( 'All results', data );
-						return Promise.resolve( data );
-					} else {
-						return getPagePromise( page + 1, status, data );
-					}
-				} );
-			}
 			Promise.all( [
-				getPagePromise( 1, 'publish', [] ),
-				getPagePromise( 1, 'private', [] ),
-				getPagePromise( 1, 'trash', [] ),
+				getPagePromise( url, 1, 'publish', [], login, pass ),
+				getPagePromise( url, 1, 'private', [], login, pass ),
+				getPagePromise( url, 1, 'trash', [], login, pass ),
 			] )
 				.then( ( responses ) => {
 					const response = responses.flat();
 					setTodos(
 						response
-							.filter( ( post ) => {
+							.filter( ( post: StoredTodo ) => {
 								return post.status !== 'trash';
 							} )
-							.map( ( post ) => ( {
+							.map( ( post: StoredTodo ) => ( {
 								id: post.id,
 								subject: post.title.raw,
 								done: false,
@@ -377,9 +358,6 @@ function createDataManager(): DataManager {
 							} ) )
 					);
 					// Save new Reminders to todos.
-
-					//Calendar.getRemindersAsync([]);
-
 					// push ios reminders to WP
 					if (
 						data.taxonomy &&
@@ -387,258 +365,8 @@ function createDataManager(): DataManager {
 						data.reminders_calendars &&
 						data.reminders_calendars.length > 0
 					) {
-						const syncedCalendars = data.taxonomy_terms
-							.map( ( term ) => term.meta.reminders_calendar )
-							.filter( Boolean );
-						const reminders_pushed = Calendar.getRemindersAsync(
-							syncedCalendars
-						).then( ( reminders ) => {
-							const updates = [];
-							reminders.forEach( ( reminder ) => {
-								const synced_notebook =
-									data.taxonomy_terms.find(
-										( term ) =>
-											term.meta.reminders_calendar ===
-											reminder.calendarId
-									);
-								if ( ! synced_notebook ) {
-									// This reminder is not synced.
-									return;
-								}
-								if ( reminder.completed ) {
-									console.log(
-										'Skipping completed reminder',
-										reminder
-									);
-									return;
-								}
-								const existing = response.find(
-									( post ) =>
-										post.meta &&
-										post.meta.reminders_id === reminder.id
-								);
-								if ( ! existing ) {
-									// Add the reminder.
-									const payload = {
-										title: reminder.title,
-										post_name: 'ios_' + reminder.id,
-										status: 'private',
-										meta: {
-											reminders_id: reminder.id,
-										},
-									};
-									payload[ data.taxonomy ] = [
-										synced_notebook.id,
-									];
-									console.log(
-										'NEW TODO',
-										JSON.stringify( payload )
-									);
-									updates.push(
-										authenticadedFetch(
-											url,
-											{
-												method: 'POST',
-												body: JSON.stringify( payload ),
-											},
-											login,
-											pass
-										)
-									);
-								}
-							} );
-							return Promise.all( updates );
-						} );
-						// Push wp to ios reminders
-						reminders_pushed.then( () => {
-							const rest_base =
-								data.taxonomies[ data.taxonomy ].rest_base;
-							response.forEach( ( todo ) => {
-								const terms = todo[ rest_base ]
-									.map( ( id ) =>
-										data.taxonomy_terms.find(
-											( term ) => term.id === id
-										)
-									)
-									.filter(
-										( term ) =>
-											term &&
-											term.meta.reminders_calendar &&
-											term.meta.reminders_calendar !== ''
-									)
-									.slice( 0, 1 ); // Only one calendar for now.
-								if (
-									terms.length === 0 ||
-									! terms[ 0 ].meta.reminders_calendar ||
-									terms[ 0 ].meta.reminders_calendar === 'no'
-								) {
-									return;
-								}
-
-								if ( todo.meta && todo.meta.reminders_id ) {
-									// Already exists.
-									//console.log( 'UPDATING REMINDER', todo.title.raw, terms[0].meta.reminders_calendar );
-									Calendar.getReminderAsync(
-										todo.meta.reminders_id
-									)
-										.catch( ( err ) => {} )
-										.then( ( reminder ) => {
-											if ( ! reminder || ! reminder.id ) {
-												return;
-											}
-											if (
-												reminder.calendarId !==
-												terms[ 0 ].meta
-													.reminders_calendar
-											) {
-												// We have to delete and recreate in another list.
-												console.log(
-													'Moving reminder',
-													todo.title.raw,
-													reminder.id,
-													terms[ 0 ].meta
-														.reminders_calendar
-												);
-												Calendar.deleteReminderAsync(
-													reminder.id
-												);
-												Calendar.createReminderAsync(
-													terms[ 0 ].meta
-														.reminders_calendar,
-													{
-														title: todo.title.raw,
-														completed:
-															todo.status ===
-															'trash',
-														url: getWPAdminUrlForPost(
-															data,
-															todo.id
-														),
-														notes: todo.excerpt.raw,
-													}
-												).then( ( newReminderId ) => {
-													authenticadedFetch(
-														url + '/' + todo.id,
-														{
-															method: 'POST',
-															body: JSON.stringify(
-																{
-																	meta: {
-																		reminders_id:
-																			newReminderId,
-																	},
-																}
-															),
-														},
-														login,
-														pass
-													).then( ( response ) => {
-														//TODO: push that to state.
-													} );
-												} );
-												return;
-											}
-											const changes = {};
-											if (
-												reminder.title !==
-												todo.title.raw
-											) {
-												changes.title = todo.title.raw;
-											}
-											if (
-												reminder.notes !==
-												todo.excerpt.raw
-											) {
-												changes.notes =
-													todo.excerpt.raw;
-											}
-											if (
-												reminder.completed !==
-												( todo.status === 'trash' )
-											) {
-												changes.completed =
-													todo.status === 'trash';
-											}
-											if (
-												Object.keys( changes ).length >
-												0
-											) {
-												console.log(
-													'Reminder changes detected',
-													todo.title.raw,
-													changes
-												);
-												return Calendar.updateReminderAsync(
-													todo.meta.reminders_id,
-													changes
-												);
-											}
-										} );
-									// Calendar.updateReminderAsync( todo.meta.reminders_id, {
-									//   // title: todo.title.raw,
-									//   // completed: ( todo.status === 'trash' ),
-									//   calendarId: 'F738DB44-3997-4A9C-80D6-113EB4A172FD',//terms[0].meta.reminders_calendar
-									// } ).catch( err => {
-									//   //console.log( 'Error updating reminder', err );
-									// } )
-									// .then( reminder => console.log( 'UPDATED', todo.title.raw, reminder ) );
-									return;
-								} else {
-								}
-
-								const reminders_list_id =
-									terms[ 0 ].meta.reminders_calendar;
-								console.log(
-									'ADDING TO REMINDERS',
-									reminders_list_id
-								);
-								// Adding reminders to the list.
-								Calendar.createReminderAsync(
-									reminders_list_id,
-									{
-										title: todo.title.raw,
-										completed: todo.status === 'trash',
-										url: getWPAdminUrlForPost(
-											data,
-											todo.id
-										),
-										notes: todo.excerpt.raw,
-									}
-								)
-									.catch( ( err ) => {
-										console.log(
-											'Error creating reminder',
-											err
-										);
-									} )
-									.then( ( reminder_id ) => {
-										console.log(
-											'Created Reminder',
-											reminder_id
-										);
-										authenticadedFetch(
-											url + '/' + todo.id,
-											{
-												method: 'POST',
-												body: JSON.stringify( {
-													meta: {
-														reminders_id:
-															reminder_id,
-													},
-												} ),
-											},
-											login,
-											pass
-										).then( ( response ) => {
-											//TODO: push that to state.
-											console.log(
-												'Created a new todo from reminder',
-												JSON.stringify( response )
-											);
-										} );
-									} );
-							} );
-						} );
+                        console.log( 'Pushing reminders to WP' );
+                        pushRemindersToWP( data, response, pushTodoToWP );
 					}
 
 					setRefreshing( false );
