@@ -113,6 +113,102 @@ interface DataManager {
 	saveMappedIosRemindersList: ( term: any, value: any ) => void;
 }
 
+/**
+ * This is the main sync function.
+ * @param cachedData 
+ * @param data 
+ * @param login 
+ * @param pass 
+ * @param setData 
+ * @param setTodos 
+ * @param setRefreshing 
+ * @param pushTodoToWP 
+ * @returns 
+ */
+async function syncData( cachedData: Todo[], data: DataState, login: string, pass: string, setData: React.Dispatch< React.SetStateAction< DataState > >, setTodos: React.Dispatch< React.SetStateAction< Todo[] > >, setRefreshing: React.Dispatch< React.SetStateAction< boolean > >, pushTodoToWP: ( todo: Partial<Todo> ) => Promise< any > ) {
+    const url = getURLForCPT( data.post_types, data.post_type );
+
+    if ( ! data.connected || ! url ) {
+        console.warn( 'Bailing on sync, not connected' );
+        return;
+    }
+    // Sync step 1: Get all the "dirty" todos and sync them to the server.
+    let updatePromises: Promise< any >[] = [];
+    if ( cachedData ) {
+        const dataToSync = cachedData
+            .filter( ( todo ) => todo.dirty )
+            .filter( ( todo ) => todo.subject.length > 0 );
+        console.log( 'Trigggering sync' );
+        updatePromises = dataToSync.map( pushTodoToWP );
+    }
+
+    // Step 2: Once all the todos are synced, we can pull the data from the server.
+    Promise.all( updatePromises ).then( ( responses ) => {
+        console.log( 'Synced Data', JSON.stringify( responses ) );
+        setRefreshing( true );
+        // Pull taxonomies.
+        authenticadedFetch( data.taxonomies[ data.taxonomy ]._links[ 'wp:items' ][ 0 ].href +
+            '?per_page=100', {}, login, pass )
+        .then( ( response ) => {
+            setData( ( prevData ) => {
+                const newData = { ...prevData, taxonomy_terms: response };
+                AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+                return newData;
+            } );
+        } );
+
+        // Update iOS reminders calendars if needed.
+        if ( Platform.OS === 'ios' ) {
+            getRemindersCalendars( setData, AsyncStorage );
+        }
+        // Pull latest todos.
+        Promise.all( [
+            getPagePromise( url, 1, 'publish', [], login, pass ),
+            getPagePromise( url, 1, 'private', [], login, pass ),
+            getPagePromise( url, 1, 'trash', [], login, pass ),
+        ] )
+            .then( ( responses ) => {
+                const response = responses.flat();
+                setTodos(
+                    response
+                        .filter( ( post: StoredTodo ) => {
+                            return post.status !== 'trash';
+                        } )
+                        .map( ( post: StoredTodo ) => ( {
+                            id: post.id,
+                            subject: post.title.raw,
+                            done: false,
+                            dirty: false,
+                            terms: data.taxonomy
+                                ? post[
+                                        data.taxonomies[ data.taxonomy ]
+                                            .rest_base
+                                  ]
+                                : [],
+                        } ) )
+                );
+                // Save new Reminders to todos.
+                // push ios reminders to WP
+                if (
+                    Platform.OS === 'ios' &&
+                    data.taxonomy &&
+                    data.taxonomies[ data.taxonomy ] &&
+                    data.reminders_calendars &&
+                    data.reminders_calendars.length > 0
+                ) {
+                    console.log( 'Pushing reminders to WP' );
+                    pushRemindersToWP( data, response, pushTodoToWP );
+                }
+
+                setRefreshing( false );
+            } )
+            .catch( ( err ) => {
+                console.log( 'ERROR', err );
+                setRefreshing( false );
+            } );
+    } );
+}
+
 function createDataManager(): DataManager {
 	const [ data, setData ] = useState< DataState >( initialData );
 	const [ todos, setTodos ] = useState< Todo[] >( [] );
@@ -226,19 +322,9 @@ function createDataManager(): DataManager {
 		}
 
 		if ( url && storedLogin && storedPass && savedConfigObject.connected ) {
-            sync();
+            syncData( savedTodosObject, savedConfigObject, storedLogin, storedPass, setData, setTodos, setRefreshing, pushTodoToWP );
 		}
 	};
-
-	const loadTaxonomyTerms = useCallback(
-		( data: DataState, taxonomy: string ): Promise< any > => {
-			const url =
-				data.taxonomies[ taxonomy ]._links[ 'wp:items' ][ 0 ].href +
-				'?per_page=100';
-			return authenticadedFetch( url, {}, login, pass );
-		},
-		[ login, pass, data ]
-	);
 
 	const handleToggleTaskItem = useCallback( ( item ) => {
 		setTodos( ( prevData ) => {
@@ -308,86 +394,7 @@ function createDataManager(): DataManager {
 
     // This is the main sync function.
 	const sync = useCallback( async () => {
-		const url = getURLForCPT( data.post_types, data.post_type );
-		const cachedData = todos;
-
-		if ( ! data.connected || ! url ) {
-			console.warn( 'Bailing on sync, not connected' );
-			return;
-		}
-        // Sync step 1: Get all the "dirty" todos and sync them to the server.
-		let updatePromises: Promise< any >[] = [];
-		if ( cachedData ) {
-			const dataToSync = cachedData
-				.filter( ( todo ) => todo.dirty )
-				.filter( ( todo ) => todo.subject.length > 0 );
-			console.log( 'Trigggering sync' );
-			updatePromises = dataToSync.map( pushTodoToWP );
-		}
-
-        // Step 2: Once all the todos are synced, we can pull the data from the server.
-		Promise.all( updatePromises ).then( ( responses ) => {
-			console.log( 'Synced Data', JSON.stringify( responses ) );
-			setRefreshing( true );
-			// Pull taxonomies.
-			loadTaxonomyTerms( data, data.taxonomy ).then( ( response ) => {
-				setData( ( prevData ) => {
-					const newData = { ...prevData, taxonomy_terms: response };
-					AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
-					return newData;
-				} );
-			} );
-
-			// Update iOS reminders calendars if needed.
-            if ( Platform.OS === 'ios' ) {
-                getRemindersCalendars( setData, AsyncStorage );
-            }
-			// Pull latest todos.
-			Promise.all( [
-				getPagePromise( url, 1, 'publish', [], login, pass ),
-				getPagePromise( url, 1, 'private', [], login, pass ),
-				getPagePromise( url, 1, 'trash', [], login, pass ),
-			] )
-				.then( ( responses ) => {
-					const response = responses.flat();
-					setTodos(
-						response
-							.filter( ( post: StoredTodo ) => {
-								return post.status !== 'trash';
-							} )
-							.map( ( post: StoredTodo ) => ( {
-								id: post.id,
-								subject: post.title.raw,
-								done: false,
-								dirty: false,
-								terms: data.taxonomy
-									? post[
-											data.taxonomies[ data.taxonomy ]
-												.rest_base
-									  ]
-									: [],
-							} ) )
-					);
-					// Save new Reminders to todos.
-					// push ios reminders to WP
-					if (
-                        Platform.OS === 'ios' &&
-						data.taxonomy &&
-						data.taxonomies[ data.taxonomy ] &&
-						data.reminders_calendars &&
-						data.reminders_calendars.length > 0
-					) {
-                        console.log( 'Pushing reminders to WP' );
-                        pushRemindersToWP( data, response, pushTodoToWP );
-					}
-
-					setRefreshing( false );
-				} )
-				.catch( ( err ) => {
-					console.log( 'ERROR', err );
-					setRefreshing( false );
-				} );
-		} );
+        syncData( todos, data, login, pass, setData, setTodos, setRefreshing, pushTodoToWP );
 	}, [ data, todos, login, pass ] );
 
 	const connectWP = useCallback( () => {
