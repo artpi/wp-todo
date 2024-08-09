@@ -12,8 +12,9 @@ import {
 	normalizeUrl,
     getPagePromise,
 } from './wpapi';
+import { Platform } from 'react-native';
 import shortid from 'shortid';
-import { getRemindersCalendars, pushRemindersToWP } from './ios-reminders';
+import { getRemindersCalendars, pushRemindersToWP, useRemindersPermissions } from './ios-reminders';
 
 export interface StoredTodo{
     title: {
@@ -122,10 +123,17 @@ function createDataManager(): DataManager {
 	const [ posPlugin, setPosPlugin ] = useState( 0 ); // 0 - not detected, 1 - detected, 2 - continuing without it.
 	const [ connectingError, setConnectingError ] = useState( '' );
 	const [ refreshing, setRefreshing ] = useState< boolean >( false );
+    const [ remindersPermission, requestRemindersPermission ] = useRemindersPermissions();
 
-	useEffect( () => {
+    useEffect( () => {
 		loadStoredData();
 	}, [] );
+
+	useEffect( () => {
+        if ( Platform.OS === 'ios' && ( ! remindersPermission || ( remindersPermission.status !== 'granted' && remindersPermission.canAskAgain ) ) ) {
+            requestRemindersPermission();
+        }
+	}, [ remindersPermission ] );
 
 	useEffect( () => {
 		if ( todos.length > 0 ) {
@@ -187,6 +195,7 @@ function createDataManager(): DataManager {
                 pass
             );
         }
+        return Promise.reject();
     }
 
 	const loadStoredData = async () => {
@@ -330,7 +339,9 @@ function createDataManager(): DataManager {
 			} );
 
 			// Update iOS reminders calendars if needed.
-            //getRemindersCalendars( setData, AsyncStorage );
+            if ( Platform.OS === 'ios' ) {
+                getRemindersCalendars( setData, AsyncStorage );
+            }
 			// Pull latest todos.
 			Promise.all( [
 				getPagePromise( url, 1, 'publish', [], login, pass ),
@@ -360,6 +371,7 @@ function createDataManager(): DataManager {
 					// Save new Reminders to todos.
 					// push ios reminders to WP
 					if (
+                        Platform.OS === 'ios' &&
 						data.taxonomy &&
 						data.taxonomies[ data.taxonomy ] &&
 						data.reminders_calendars &&

@@ -27,6 +27,7 @@ export default function MainScreen( { route } ) {
 		handleChangeTaskItemSubject,
 		createEmptyTodo,
 	} = useDataManagerContext();
+
 	const [ editingItemId, setEditingItemId ] = useState< string | null >(
 		null
 	);

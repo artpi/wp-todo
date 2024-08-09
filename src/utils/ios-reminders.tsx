@@ -21,15 +21,16 @@ export function getRemindersCalendars( setData, AsyncStorage ) {
         }
     );
 }
+export const useRemindersPermissions = Calendar.useRemindersPermissions;
 
-export function pushRemindersToWP( data: DataState, response: StoredTodo[], pushTodoToWP: ( todo: Partial<Todo> ) => Promise<any> | undefined ) {
+export function pushRemindersToWP( data: DataState, response: StoredTodo[], pushTodoToWP: ( todo: Partial<Todo> ) => Promise<any> ) {
     const syncedCalendars = data.taxonomy_terms
         .map( ( term ) => term.meta.reminders_calendar )
         .filter( Boolean );
     const reminders_pushed = Calendar.getRemindersAsync(
         syncedCalendars
     ).then( ( reminders ) => {
-        const updates = [];
+        const updates: Promise<any>[] = [];
         reminders.forEach( ( reminder ) => {
             const synced_notebook =
                 data.taxonomy_terms.find(
@@ -67,11 +68,7 @@ export function pushRemindersToWP( data: DataState, response: StoredTodo[], push
                         meta: {
                             reminders_id: reminder.id,
                         },
-                    } ).then( newTodo => {
-                        console.log( 'New todo', newTodo );
-                        return Promise.resolve( newTodo );
-                    }
-                    )
+                    } )
                 );
             }
         } );
