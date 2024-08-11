@@ -29,6 +29,7 @@ export default function MainScreen( { route, navigation } ) {
 		handleChangeTaskItemSubject,
 		createEmptyTodo,
     setDefaultView,
+    iOSSyncedRemindersLists
 	} = useDataManagerContext();
 
 	const [ editingItemId, setEditingItemId ] = useState< string | null >(
@@ -83,7 +84,7 @@ export default function MainScreen( { route, navigation } ) {
 								</FormControl.Label>
 								<Select
 									selectedValue={
-										term.meta.reminders_calendar || 'no'
+										iOSSyncedRemindersLists[ term.id ] || 'no'
 									}
 									minWidth="200"
 									accessibilityLabel="Dont sync"

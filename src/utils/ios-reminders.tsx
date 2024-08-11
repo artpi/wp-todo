@@ -23,10 +23,8 @@ export function getRemindersCalendars( setData, AsyncStorage ) {
 }
 export const useRemindersPermissions = Calendar.useRemindersPermissions;
 
-export function pushRemindersToWP( data: DataState, response: StoredTodo[], pushTodoToWP: ( todo: Partial<Todo> ) => Promise<any> ) {
-    const syncedCalendars = data.taxonomy_terms
-        .map( ( term ) => term.meta.reminders_calendar )
-        .filter( Boolean );
+export function pushRemindersToWP( data: DataState, response: StoredTodo[], pushTodoToWP: ( todo: Partial<Todo> ) => Promise<any>, iOSSyncedRemindersLists: { [ key: string ]: string } ) {
+    const syncedCalendars = Object.values( iOSSyncedRemindersLists );
     const reminders_pushed = Calendar.getRemindersAsync(
         syncedCalendars
     ).then( ( reminders ) => {
@@ -34,9 +32,9 @@ export function pushRemindersToWP( data: DataState, response: StoredTodo[], push
         reminders.forEach( ( reminder ) => {
             const synced_notebook =
                 data.taxonomy_terms.find(
-                    ( term ) =>
-                        term.meta.reminders_calendar ===
-                        reminder.calendarId
+                    ( term ) => (
+                        iOSSyncedRemindersLists[ term.id ] && iOSSyncedRemindersLists[ term.id ] === reminder.calendarId
+                    )
                 );
             if ( ! synced_notebook ) {
                 // This reminder is not synced.
@@ -88,16 +86,16 @@ export function pushRemindersToWP( data: DataState, response: StoredTodo[], push
                 .filter(
                     ( term ) =>
                         term &&
-                        term.meta.reminders_calendar &&
-                        term.meta.reminders_calendar !== ''
+                        iOSSyncedRemindersLists[ term.id ] &&
+                        iOSSyncedRemindersLists[ term.id ] !== ''
                 )
                 .slice( 0, 1 ); // Only one calendar for now.
 
             // If the current calendar is not synced, skip.
             if (
                 terms.length === 0 ||
-                ! terms[ 0 ].meta.reminders_calendar ||
-                terms[ 0 ].meta.reminders_calendar === 'no'
+                ! iOSSyncedRemindersLists[ terms[0].id ] ||
+                iOSSyncedRemindersLists[ terms[0].id ] === 'no'
             ) {
                 return;
             }
@@ -114,24 +112,20 @@ export function pushRemindersToWP( data: DataState, response: StoredTodo[], push
                             return;
                         }
                         if (
-                            reminder.calendarId !==
-                            terms[ 0 ].meta
-                                .reminders_calendar
+                            reminder.calendarId !== iOSSyncedRemindersLists[ terms[0].id ]
                         ) {
                             // We have to delete and recreate in another list.
                             console.log(
                                 'Moving reminder',
                                 todo.title.raw,
                                 reminder.id,
-                                terms[ 0 ].meta
-                                    .reminders_calendar
+                                iOSSyncedRemindersLists[ terms[0].id ]
                             );
                             Calendar.deleteReminderAsync(
                                 reminder.id
                             );
                             Calendar.createReminderAsync(
-                                terms[ 0 ].meta
-                                    .reminders_calendar,
+                                iOSSyncedRemindersLists[ terms[0].id ],
                                 {
                                     title: todo.title.raw,
                                     completed:
@@ -186,8 +180,7 @@ export function pushRemindersToWP( data: DataState, response: StoredTodo[], push
                 return;
             } else {
                 // Reminder was created on the WP side elsewhere. Now we need to create it on the iOS side.
-                const reminders_list_id =
-                terms[ 0 ].meta.reminders_calendar;
+                const reminders_list_id = iOSSyncedRemindersLists[ terms[0].id ];
                 console.log(
                     'ADDING TO REMINDERS',
                     reminders_list_id

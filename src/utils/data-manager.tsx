@@ -114,6 +114,7 @@ interface DataManager {
 	handleChangeTaskItemSubject: ( item: Todo, newSubject: string ) => void;
 	createEmptyTodo: ( filter: number ) => string;
 	saveMappedIosRemindersList: ( term: any, value: any ) => void;
+    iOSSyncedRemindersLists: { [ key: string ]: string };
     setDefaultView: ( view: string | null ) => void;
 }
 
@@ -129,7 +130,7 @@ interface DataManager {
  * @param pushTodoToWP 
  * @returns 
  */
-async function syncData( cachedData: Todo[], data: DataState, login: string, pass: string, setData: React.Dispatch< React.SetStateAction< DataState > >, setTodos: React.Dispatch< React.SetStateAction< Todo[] > >, setRefreshing: React.Dispatch< React.SetStateAction< boolean > >, pushTodoToWP: ( todo: Partial<Todo> ) => Promise< any > ) {
+async function syncData( cachedData: Todo[], data: DataState, login: string, pass: string, setData: React.Dispatch< React.SetStateAction< DataState > >, setTodos: React.Dispatch< React.SetStateAction< Todo[] > >, setRefreshing: React.Dispatch< React.SetStateAction< boolean > >, pushTodoToWP: ( todo: Partial<Todo> ) => Promise< any >, iOSSyncedRemindersLists: { [ key: string ]: string } ) {
     const url = getURLForCPT( data.post_types, data.post_type );
 
     if ( ! data.connected || ! url ) {
@@ -201,7 +202,7 @@ async function syncData( cachedData: Todo[], data: DataState, login: string, pas
                     data.reminders_calendars.length > 0
                 ) {
                     console.log( 'Pushing reminders to WP' );
-                    pushRemindersToWP( data, response, pushTodoToWP );
+                    pushRemindersToWP( data, response, pushTodoToWP, iOSSyncedRemindersLists );
                 }
 
                 setRefreshing( false );
@@ -225,6 +226,7 @@ function createDataManager(): DataManager {
 	const [ refreshing, setRefreshing ] = useState< boolean >( false );
     const [ remindersPermission, requestRemindersPermission ] = useRemindersPermissions();
     const [ loading, setLoading ] = useState( true );
+    const [ iOSSyncedRemindersLists, setIosSyncedRemindersLists ] = useState( {} );
 
     useEffect( () => {
 		loadStoredData();
@@ -328,7 +330,7 @@ function createDataManager(): DataManager {
 
         setLoading( false );
 		if ( url && storedLogin && storedPass && savedConfigObject.connected ) {
-            syncData( savedTodosObject, savedConfigObject, storedLogin, storedPass, setData, setTodos, setRefreshing, pushTodoToWP );
+            syncData( savedTodosObject, savedConfigObject, storedLogin, storedPass, setData, setTodos, setRefreshing, pushTodoToWP, iOSSyncedRemindersLists );
 		}
 	};
 
@@ -376,26 +378,31 @@ function createDataManager(): DataManager {
 	}, [] );
 
 	const saveMappedIosRemindersList = useCallback( async ( term, value ) => {
-		console.log( 'Selected', value, JSON.stringify( term ) );
-		authenticadedFetch(
-			term._links.self[ 0 ].href,
-			{
-				method: 'POST',
-				body: JSON.stringify( {
-					meta: { reminders_calendar: value },
-				} ),
-			},
-			login,
-			pass
-		).then( ( res ) => {
-			setData( ( prevData ) => {
-				const newTerms = prevData.taxonomy_terms.map( ( t ) =>
-					t.id === term.id ? res : t
-				);
-				const newData = { ...prevData, taxonomy_terms: newTerms };
-				return newData;
-			} );
-		} );
+        setIosSyncedRemindersLists( ( prevLists ) => {
+            const newLists = { ...prevLists, [ term.id ]: value };
+            AsyncStorage.setItem( 'ios_reminders_lists', JSON.stringify( newLists ) );
+            return newLists;
+        } );
+		// console.log( 'Selected', value, JSON.stringify( term ) );
+		// authenticadedFetch(
+		// 	term._links.self[ 0 ].href,
+		// 	{
+		// 		method: 'POST',
+		// 		body: JSON.stringify( {
+		// 			meta: { reminders_calendar: value },
+		// 		} ),
+		// 	},
+		// 	login,
+		// 	pass
+		// ).then( ( res ) => {
+		// 	setData( ( prevData ) => {
+		// 		const newTerms = prevData.taxonomy_terms.map( ( t ) =>
+		// 			t.id === term.id ? res : t
+		// 		);
+		// 		const newData = { ...prevData, taxonomy_terms: newTerms };
+		// 		return newData;
+		// 	} );
+		// } );
 	}, [] );
 
     const setDefaultView = useCallback( ( view: string | null ) => setData( oldData => {
@@ -406,7 +413,7 @@ function createDataManager(): DataManager {
 
     // This is the main sync function.
 	const sync = useCallback( async () => {
-        syncData( todos, data, login, pass, setData, setTodos, setRefreshing, pushTodoToWP );
+        syncData( todos, data, login, pass, setData, setTodos, setRefreshing, pushTodoToWP, iOSSyncedRemindersLists );
 	}, [ data, todos, login, pass ] );
 
 	const connectWP = useCallback( () => {
@@ -561,6 +568,7 @@ function createDataManager(): DataManager {
 		handleChangeTaskItemSubject,
 		createEmptyTodo,
 		saveMappedIosRemindersList,
+        iOSSyncedRemindersLists,
         setDefaultView,
 	};
 }
