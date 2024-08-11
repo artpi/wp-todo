@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
 	Icon,
 	VStack,
@@ -6,7 +6,9 @@ import {
 	Fab,
 	FormControl,
 	Input,
+  Switch,
 	Select,
+  Text,
 } from 'native-base';
 import { AntDesign } from '@expo/vector-icons';
 import AnimatedColorBox from '../components/animated-color-box';
@@ -26,15 +28,21 @@ export default function MainScreen( { route, navigation } ) {
 		handleToggleTaskItem,
 		handleChangeTaskItemSubject,
 		createEmptyTodo,
+    setDefaultView,
 	} = useDataManagerContext();
 
 	const [ editingItemId, setEditingItemId ] = useState< string | null >(
 		null
 	);
+
 	//console.log(data.taxonomy_terms);
 	let title = 'All todos';
 	let filter = 0;
 	let term = null;
+  if( ! route.params && data.default_term ) {
+    route.params = { term: data.default_term };
+  }
+
 	if ( route.params?.term && data && data.taxonomy_terms ) {
 		term = data.taxonomy_terms.find(
 			( t ) => t.slug === route.params.term
@@ -104,6 +112,11 @@ export default function MainScreen( { route, navigation } ) {
 											)
 										) }
 								</Select>
+                <FormControl.Label>
+                  <Switch size="sm" isChecked={ data.default_term === route.params.term } onToggle={ ( newData ) => setDefaultView( newData ? route.params.term : null ) } colorScheme="blue" />
+                  <Text>Default View</Text>
+                </FormControl.Label>
+                
 							</FormControl>
 						</>
 					)

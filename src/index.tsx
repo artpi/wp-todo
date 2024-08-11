@@ -9,7 +9,12 @@ import SetupScreen from './screens/setup-screen';
 const Drawer = createDrawerNavigator();
 
 const App: React.FC = () => {
-	const { data } = useDataManagerContext();
+
+	const { data, loading } = useDataManagerContext();
+  if( loading ) {
+    // TODO: add loading screen
+    return;
+  }
 
 	if ( ! data.connected ) {
 		return <SetupScreen />;

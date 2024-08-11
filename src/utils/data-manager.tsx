@@ -42,6 +42,7 @@ export interface DataState {
 	username: string;
 	gravatar: string;
 	reminders_calendars: any[];
+    default_term: string | null;
 }
 
 export interface Todo {
@@ -85,9 +86,11 @@ const initialData: DataState = {
 	username: '',
 	gravatar: '',
 	reminders_calendars: [],
+    default_term: null,
 };
 
 interface DataManager {
+    loading: boolean;
 	data: DataState;
 	setData: React.Dispatch< React.SetStateAction< DataState > >;
 	todos: Todo[];
@@ -111,6 +114,7 @@ interface DataManager {
 	handleChangeTaskItemSubject: ( item: Todo, newSubject: string ) => void;
 	createEmptyTodo: ( filter: number ) => string;
 	saveMappedIosRemindersList: ( term: any, value: any ) => void;
+    setDefaultView: ( view: string | null ) => void;
 }
 
 /**
@@ -220,6 +224,7 @@ function createDataManager(): DataManager {
 	const [ connectingError, setConnectingError ] = useState( '' );
 	const [ refreshing, setRefreshing ] = useState< boolean >( false );
     const [ remindersPermission, requestRemindersPermission ] = useRemindersPermissions();
+    const [ loading, setLoading ] = useState( true );
 
     useEffect( () => {
 		loadStoredData();
@@ -321,6 +326,7 @@ function createDataManager(): DataManager {
 			setTodos( savedTodosObject );
 		}
 
+        setLoading( false );
 		if ( url && storedLogin && storedPass && savedConfigObject.connected ) {
             syncData( savedTodosObject, savedConfigObject, storedLogin, storedPass, setData, setTodos, setRefreshing, pushTodoToWP );
 		}
@@ -391,6 +397,12 @@ function createDataManager(): DataManager {
 			} );
 		} );
 	}, [] );
+
+    const setDefaultView = useCallback( ( view: string | null ) => setData( oldData => {
+        const newData = ( { ...oldData, default_term: view } );
+        AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+        return newData;
+    } ), [] );
 
     // This is the main sync function.
 	const sync = useCallback( async () => {
@@ -525,6 +537,7 @@ function createDataManager(): DataManager {
 	}, [] );
 
 	return {
+        loading,
 		data,
 		setData,
 		todos,
@@ -548,6 +561,7 @@ function createDataManager(): DataManager {
 		handleChangeTaskItemSubject,
 		createEmptyTodo,
 		saveMappedIosRemindersList,
+        setDefaultView,
 	};
 }
 

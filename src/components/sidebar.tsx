@@ -34,7 +34,7 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 		navigation.closeDrawer();
 	}, [ navigation ] );
 	const handlePressMenuMain = useCallback( () => {
-		navigation.navigate( 'Main' );
+		navigation.navigate( 'Main', { term: null } );
 	}, [ navigation ] );
 	const handlePressMenuAbout = useCallback( () => {
 		navigation.navigate( 'About' );
