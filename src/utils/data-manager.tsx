@@ -302,13 +302,14 @@ function createDataManager(): DataManager {
     }
 
 	const loadStoredData = async () => {
-		const [ url, storedLogin, storedPass, savedConfig, savedTodos ] =
+		const [ url, storedLogin, storedPass, savedConfig, savedTodos, savedIosRemindersLists ] =
 			await Promise.all( [
 				AsyncStorage.getItem( 'wpurl' ),
 				AsyncStorage.getItem( 'wplogin' ),
 				AsyncStorage.getItem( 'wppass' ),
 				AsyncStorage.getItem( 'config' ),
 				AsyncStorage.getItem( 'todos' ),
+                AsyncStorage.getItem( 'ios_reminders_lists' ),
 			] );
 
 		if ( url ) setWPURL( url );
@@ -327,6 +328,10 @@ function createDataManager(): DataManager {
 			savedTodosObject = JSON.parse( savedTodos );
 			setTodos( savedTodosObject );
 		}
+
+        if ( savedIosRemindersLists ) {
+            setIosSyncedRemindersLists( JSON.parse( savedIosRemindersLists ) );
+        }
 
         setLoading( false );
 		if ( url && storedLogin && storedPass && savedConfigObject.connected ) {

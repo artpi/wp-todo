@@ -146,7 +146,7 @@ export default function TaskList( props: TaskListProps ) {
 							key={ item.id }
 							data={ item }
 							terms={
-								item.terms ? item.terms.filter( term => ( term !== filter ) ).map( ( term ) => data.taxonomy_terms.find( ( t ) => t.id === term ) ).map( t => ( <TermBadge term={ t } navigation={ navigation } /> ) ) : []
+								item.terms ? item.terms.filter( term => ( term !== filter ) ).map( ( term ) => data.taxonomy_terms.find( ( t ) => t.id === term ) ).map( t => ( <TermBadge key={ t.id } term={ t } navigation={ navigation } /> ) ) : []
 							}
 							simultaneousHandlers={ refScrollView }
 							isEditing={ item.id === editingItemId }

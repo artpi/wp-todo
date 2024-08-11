@@ -36,7 +36,6 @@ export default function MainScreen( { route, navigation } ) {
 		null
 	);
 
-	//console.log(data.taxonomy_terms);
 	let title = 'All todos';
 	let filter = 0;
 	let term = null;
@@ -107,6 +106,7 @@ export default function MainScreen( { route, navigation } ) {
 										data.reminders_calendars.map(
 											( calendar ) => (
 												<Select.Item
+													key={ calendar.id }
 													label={ calendar.title }
 													value={ calendar.id }
 												/>

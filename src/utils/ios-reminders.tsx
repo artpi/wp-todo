@@ -24,7 +24,10 @@ export function getRemindersCalendars( setData, AsyncStorage ) {
 export const useRemindersPermissions = Calendar.useRemindersPermissions;
 
 export function pushRemindersToWP( data: DataState, response: StoredTodo[], pushTodoToWP: ( todo: Partial<Todo> ) => Promise<any>, iOSSyncedRemindersLists: { [ key: string ]: string } ) {
-    const syncedCalendars = Object.values( iOSSyncedRemindersLists );
+    const syncedCalendars = Object.values( iOSSyncedRemindersLists ).filter( ( id ) => id !== 'no' );
+    if ( syncedCalendars.length === 0 ) {
+        return;
+    }
     const reminders_pushed = Calendar.getRemindersAsync(
         syncedCalendars
     ).then( ( reminders ) => {
