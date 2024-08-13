@@ -13,6 +13,7 @@ import {
 	Text,
 	Switch,
 	Badge,
+	Divider,
 } from 'native-base';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import AnimatedColorBox from './animated-color-box';
@@ -22,6 +23,74 @@ import MenuButton from './menu-button';
 import * as Linking from 'expo-linking';
 import { getWPAdminUrlForCPT } from '../utils/wpapi';
 import { useDataManagerContext } from '../utils/data-manager';
+
+function countTodos( todos, taxonomy ) {
+	return todos.filter( ( t ) =>
+		t.terms
+			? t.terms.indexOf( taxonomy.id ) !== -1
+			: []
+	).length;
+}
+
+function compactTerms( terms, todos ) {
+	const indexes = {};
+	const parents = [];
+	terms.forEach( ( t ) => {
+		t.children = [];
+		t.todoCount = countTodos( todos, t );
+		t.totalChildrenCount = t.todoCount;
+		indexes[ t.id ] = t;
+	} );
+	terms.forEach( ( t ) => {
+		if ( t.parent && t.parent > 0 && indexes[ t.parent ] ) {
+			indexes[ t.parent ].children.push( t );
+			indexes[ t.parent ].totalChildrenCount += t.todoCount;
+		} else {
+			parents.push( t );
+		}
+	} );
+	return parents;
+}
+
+const Term = ( { taxonomy, showEmpty, state, navigation, icon, indent = 0 } ) => {
+	if ( ! icon ) {
+		icon = 'check-circle';
+	}
+	return (
+		<>
+		<MenuButton
+			indent={ indent > 1 ? ( indent - 1 ) * 4: 0 }
+			active={
+				state.routes[ state.index ]
+					.params &&
+				state.routes[ state.index ].params
+					?.term === taxonomy.slug
+			}
+			onPress={ () => {
+				navigation.navigate( 'Main', {
+					term: taxonomy.slug,
+				} );
+			} }
+			icon={ indent === 0 ? icon : null }
+			key={ taxonomy.slug }
+			justifyContent={ 'space-between' }
+			endIcon={
+				<Badge
+					colorScheme="default"
+					rounded="full"
+					variant="solid"
+					alignSelf="flex-end"
+				>
+					{ taxonomy.todoCount }
+				</Badge>
+			}
+		>
+			{ taxonomy.name }
+		</MenuButton>
+		{ taxonomy.children && taxonomy.children.filter( ( t ) => ( showEmpty || t.totalChildrenCount > 0 ) ).map( ( t ) => ( <Term key={ t.slug } showEmpty={ showEmpty } taxonomy={ t } state={ state } navigation={ navigation } indent={ indent + 1 } /> ) ) }
+		</>
+	);
+}
 
 const Sidebar = ( props: DrawerContentComponentProps ) => {
 	const { state, navigation } = props;
@@ -40,6 +109,8 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 		navigation.navigate( 'About' );
 	}, [ navigation ] );
 
+	const starred = data.taxonomy_terms.filter( ( t ) => ( t.meta && t.meta.flag === 'star' ) );
+	const terms = compactTerms( data.taxonomy_terms, todos );
 	return (
 		<AnimatedColorBox
 			safeArea
@@ -85,6 +156,9 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 					<Heading mb={ 4 } size="l">
 						{ data.site_title }
 					</Heading>
+					{
+						starred.map( ( t ) => ( <Term key={ 'starred-' + t.slug } showEmpty={ true } taxonomy={ t } icon="star" state={ state } navigation={ navigation } /> ) )
+					}
 					<MenuButton
 						active={
 							currentRoute === 'Main' &&
@@ -105,58 +179,12 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 					>
 						All Tasks
 					</MenuButton>
+					{ <Divider/>}
 					{ data.taxonomy_terms &&
-						data.taxonomy_terms.length > 0 &&
-						data.taxonomy_terms
-							.map( ( taxonomy ) => {
-								const todoCount = todos.filter( ( t ) =>
-									t.terms
-										? t.terms.indexOf( taxonomy.id ) !== -1
-										: []
-								).length;
-								if ( ! showEmpty && todoCount === 0 ) {
-									return false;
-								}
-								return (
-									<MenuButton
-										active={
-											state.routes[ state.index ]
-												.params &&
-											state.routes[ state.index ].params
-												?.term === taxonomy.slug
-										}
-										onPress={ () => {
-											navigation.navigate( 'Main', {
-												term: taxonomy.slug,
-											} );
-										} }
-										icon="check-circle"
-										key={ taxonomy.slug }
-										justifyContent={ 'space-between' }
-										endIcon={
-											<Badge
-												colorScheme="default"
-												rounded="full"
-												variant="solid"
-												alignSelf="flex-end"
-											>
-												{
-													todos.filter( ( t ) =>
-														t.terms
-															? t.terms.indexOf(
-																	taxonomy.id
-															  ) !== -1
-															: []
-													).length
-												}
-											</Badge>
-										}
-									>
-										{ taxonomy.name }
-									</MenuButton>
-								);
-							} )
-							.filter( Boolean ) }
+						terms
+							.filter( ( t ) => ( showEmpty || t.totalChildrenCount > 0 ) )
+							.map( ( t ) => ( <Term key={ t.slug } showEmpty={ showEmpty } taxonomy={ t } state={ state } navigation={ navigation } /> ) )
+					}
 					<MenuButton
 						active={ false }
 						icon="external-link"

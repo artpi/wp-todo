@@ -214,7 +214,7 @@ export default function SetupScreen() {
 							<Heading p={ 6 } size="m">
 								WP TODO detected the "Personal OS" plugin. Your
 								TODOs will be saved as 'TODO' post type and
-								'TODO Category' taxonomy. You are good to go.
+								'Notebook' taxonomy. You are good to go.
 							</Heading>
 						) }
 						{ posPlugin === 0 && (

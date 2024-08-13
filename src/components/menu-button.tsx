@@ -3,15 +3,17 @@ import { Button, Icon, IButtonProps } from 'native-base';
 import { Feather } from '@expo/vector-icons';
 
 interface Props extends IButtonProps {
+	indent?: number;
 	active: boolean;
 	icon: string;
 	children: React.ReactNode;
 }
 
-const MenuButton = ( { active, icon, children, ...props }: Props ) => {
+const MenuButton = ( { indent = 0, active, icon, children, ...props }: Props ) => {
 	return (
 		<Button
 			size="lg"
+			marginLeft={ indent }
 			_light={ {
 				colorScheme: 'blue',
 				_pressed: {
@@ -34,7 +36,7 @@ const MenuButton = ( { active, icon, children, ...props }: Props ) => {
 			variant="solid"
 			justifyContent="flex-start"
 			leftIcon={
-				<Icon as={ Feather } name={ icon } size="sm" opacity={ 0.5 } />
+				<Icon as={ Feather } name={ icon } size="sm" opacity={ 0.5 } color="secondary.500" />
 			}
 			{ ...props }
 		>

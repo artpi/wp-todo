@@ -514,10 +514,10 @@ function createDataManager(): DataManager {
 				// Personal OS plugin detected
 				if (
 					response[ 0 ][ 'todo' ] &&
-					response[ 1 ][ 'todo_category' ]
+					response[ 1 ][ 'notebook' ]
 				) {
 					newData[ 'post_type' ] = 'todo';
-					newData[ 'taxonomy' ] = 'todo_category';
+					newData[ 'taxonomy' ] = 'notebook';
 					setPosPlugin( 1 );
 				} else {
 					newData[ 'post_type' ] = 'post';
