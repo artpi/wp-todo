@@ -186,6 +186,7 @@ async function syncData( cachedData: Todo[], data: DataState, login: string, pas
                             done: false,
                             dirty: false,
 							note: post.excerpt.raw,
+							meta: post.meta,
                             terms: data.taxonomy
                                 ? post[
                                         data.taxonomies[ data.taxonomy ]

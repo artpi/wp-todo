@@ -86,9 +86,7 @@ export const AnimatedTaskItem = ( props: TaskItemProps ) => {
 		>
 			<TaskItem
 				simultaneousHandlers={ simultaneousHandlers }
-				subject={ data.subject }
-				isDone={ data.done }
-				note={ data.note }
+				data={ data }
 				terms={ terms }
 				isEditing={ isEditing }
 				onToggleCheckbox={ handleToggleCheckbox }
