@@ -50,6 +50,7 @@ export interface Todo {
 	subject: string;
 	done: boolean;
 	deleted?: boolean;
+	note?: string;
 	dirty: boolean;
 	terms?: number[];
     meta?: Record< string, any >;
@@ -184,6 +185,7 @@ async function syncData( cachedData: Todo[], data: DataState, login: string, pas
                             subject: post.title.raw,
                             done: false,
                             dirty: false,
+							note: post.excerpt.raw,
                             terms: data.taxonomy
                                 ? post[
                                         data.taxonomies[ data.taxonomy ]

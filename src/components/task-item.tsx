@@ -21,6 +21,7 @@ import { Feather } from '@expo/vector-icons';
 interface Props extends Pick< PanGestureHandlerProps, 'simultaneousHandlers' > {
 	isEditing: boolean;
 	isDone: boolean;
+	note: string;
 	onToggleCheckbox?: () => void;
 	onPressLabel?: () => void;
 	onRemove?: () => void;
@@ -36,6 +37,7 @@ const TaskItem = ( props: Props ) => {
 		isDone,
 		onToggleCheckbox,
 		subject,
+		note,
 		onPressLabel,
 		onRemove,
 		onChangeSubject,
@@ -133,8 +135,8 @@ const TaskItem = ( props: Props ) => {
 						flexWrap={ 'wrap' }
 					/>
 				) : (
-					<Pressable onPress={ onPressLabel }>
-						<VStack>
+					<VStack>
+						<Pressable onPress={ onPressLabel }>
 							<Text
 								strikeThrough={ isDone }
 								numberOfLines={ 3 }
@@ -146,11 +148,15 @@ const TaskItem = ( props: Props ) => {
 							>
 								{ subject }
 							</Text>
-							<HStack space={ 1 }>
-								{ terms }								
-							</HStack>
-						</VStack>
-					</Pressable>
+						</Pressable>
+						{ note && note.length > 0 && (
+							<Text my={ 2 } fontStyle={ 'italic' } color={ 'gray.500' } >{ note }</Text>
+						) }
+						<HStack space={ 1 }>
+							{ terms }
+						</HStack>
+					</VStack>
+					
 				) }
 			</HStack>
 		</SwipableView>
