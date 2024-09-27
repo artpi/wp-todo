@@ -110,6 +110,7 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 	}, [ navigation ] );
 	const starred = Object.keys( data.taxonomy_terms ).length ? data.taxonomy_terms.filter( ( t ) => ( t.meta && t.meta.flag === 'star' ) ) : [];
 	const terms = Object.keys( data.taxonomy_terms ).length ? compactTerms( data.taxonomy_terms, todos ) : [];
+
 	return (
 		<AnimatedColorBox
 			safeArea

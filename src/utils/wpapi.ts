@@ -4,12 +4,20 @@ export function authenticadedFetch(
 	url: string,
 	params: Record< string, any > = {},
 	username: string,
-	password: string
+	password: string,
+	wpcomToken: string
 ): Promise< any > {
+	let authorization = '';
+	if( wpcomToken.length > 0 ) {
+		authorization = 'Bearer ' + wpcomToken;  
+	} else if ( username.length> 0) {
+		authorization = 'Basic ' + encode( username + ':' + password );
+	}
+
 	const args = {
 		...params,
 		headers: {
-			Authorization: 'Basic ' + encode( username + ':' + password ),
+			Authorization: authorization,
 			'Content-Type': 'application/json',
 			Accept: 'application/json',
 		},
@@ -23,6 +31,14 @@ export function authenticadedFetch(
 			}
 			return Promise.resolve( response );
 		} );
+}
+
+export function getLinkToEndpoint( routes, route ) {
+	const matchingRoute = Object.keys(routes).find(path => path.endsWith(route));
+	if (matchingRoute) {
+		return routes[matchingRoute]._links.self[0].href;
+	}
+	return null;
 }
 
 interface PostType {
@@ -69,7 +85,8 @@ export function getPagePromise(
   status: string | null,
   previousData: [],
   login: string,
-  pass: string
+  pass: string,
+  wpcomToken: string
 ): Promise<[]> {
   const modifiedURL = new URL( url );
   modifiedURL.searchParams.set( 'per_page', '100' );
@@ -82,14 +99,15 @@ export function getPagePromise(
     modifiedURL.toString(),
     {},
     login,
-    pass
+    pass,
+	wpcomToken
   ).then( ( response ) => {
     const data = previousData.concat( response );
     if ( response.length < 100 ) {
       // All results
       return Promise.resolve( data );
     } else {
-      return getPagePromise( url, page + 1, status, data, login, pass );
+      return getPagePromise( url, page + 1, status, data, login, pass, wpcomToken );
     }
   } );
 }

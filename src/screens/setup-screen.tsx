@@ -1,4 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri, useAuthRequest, ResponseType } from 'expo-auth-session';
 import { Platform, KeyboardAvoidingView } from 'react-native';
 import {
 	useColorModeValue,
@@ -25,6 +27,7 @@ import { FontAwesome5, Feather } from '@expo/vector-icons';
 import LinkButton from '../components/link-button';
 import { useDataManagerContext } from '../utils/data-manager';
 
+
 export default function SetupScreen() {
 	const {
 		wpURL,
@@ -40,8 +43,9 @@ export default function SetupScreen() {
 		connectWP,
 		posPlugin,
 		setPosPlugin,
+		setWpcomToken
 	} = useDataManagerContext();
-
+	WebBrowser.maybeCompleteAuthSession();
 	const pickerStyle = {
 		marginLeft: '6%',
 		marginRight: '6%',
@@ -51,6 +55,8 @@ export default function SetupScreen() {
 		pickerStyle[ 'marginTop' ] = -48;
 		pickerStyle[ 'marginBottom' ] = -48;
 	}
+
+	const [ wpcomData, setWpcomData ] = useState( null );
 
 	const handleChangeWPURL = useCallback(
 		( e: NativeSyntheticEvent< TextInputChangeEventData > ) => {
@@ -70,6 +76,31 @@ export default function SetupScreen() {
 		},
 		[ setPass ]
 	);
+	const [ request, response, promptAsync ] = useAuthRequest(
+		{
+		  clientId: '106439',
+		  responseType: ResponseType.Token,
+		  redirectUri: makeRedirectUri( {
+			scheme: 'wptodo',
+		  } ),
+		  extraParams: {
+			blog: wpcomData?.ID ?? ''
+		  }
+		},
+		{
+			authorizationEndpoint: "https://public-api.wordpress.com/oauth2/authorize",
+			tokenEndpoint: "https://public-api.wordpress.com/oauth2/token",
+		}
+	);
+	useEffect(() => {
+		if ( response?.type === 'success' ) {
+			const { access_token } = response.params;
+			console.log('Access Token:', access_token);
+			setWpcomToken( access_token );
+			connectWP( access_token, wpcomData );
+		}
+	}, [ response ]);
+
 	return (
 		<AnimatedColorBox
 			flex={ 1 }
@@ -107,6 +138,15 @@ export default function SetupScreen() {
 								autoFocus
 								blurOnSubmit
 								onChange={ handleChangeWPURL }
+								onBlur={ event => {
+									const host = ( new URL( normalizeUrl( wpURL, 'https' ) ) ).hostname;
+									fetch( `https://public-api.wordpress.com/rest/v1.1/sites/${host}` )
+									.then( response => response.json() )
+									.then( response => {
+										console.log( response );
+										setWpcomData( response );
+									} );
+								} }
 							/>
 							{ ! wpURL && (
 								<>
@@ -135,7 +175,16 @@ export default function SetupScreen() {
 									</LinkButton>
 								</>
 							) }
-							{ wpURL && (
+							{ connectingError && (
+								<Text
+									alignContent={ 'center' }
+									margin={ '3' }
+									color={ 'red.500' }
+								>
+									{ connectingError }
+								</Text>
+							) }
+							{ wpURL && ! wpcomData && (
 								<>
 									<Input
 										margin={ '3' }
@@ -169,15 +218,6 @@ export default function SetupScreen() {
 											here
 										</Link>
 									) }
-									{ connectingError && (
-										<Text
-											alignContent={ 'center' }
-											margin={ '3' }
-											color={ 'red.500' }
-										>
-											{ connectingError }
-										</Text>
-									) }
 
 									<Button
 										colorScheme="secondary"
@@ -197,6 +237,32 @@ export default function SetupScreen() {
 										onPress={ connectWP }
 									>
 										{ 'Connect' }
+									</Button>
+								</>
+							) }
+							{ wpcomData && (
+								<>
+									<Heading p={ 6 } size="m">
+										`WordPress.com site detected. Please chose your site while connecting on WordPress.com.`
+									</Heading>
+									<Button
+										colorScheme="secondary"
+										margin={ '10%' }
+										size="md"
+										borderRadius="full"
+										marginLeft={ '6' }
+										marginRight={ '6' }
+										leftIcon={
+											<FontAwesome5
+												name="wordpress-simple"
+												size={ 24 }
+												color={ 'white' }
+												opacity={ 0.5 }
+											/>
+										}
+										onPress={ () => promptAsync() }
+									>
+										{ `Connect to ${wpcomData.name}` }
 									</Button>
 								</>
 							) }

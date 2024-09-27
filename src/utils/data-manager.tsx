@@ -11,6 +11,7 @@ import {
 	getURLForCPT,
 	normalizeUrl,
     getPagePromise,
+	getLinkToEndpoint
 } from './wpapi';
 import { Platform } from 'react-native';
 import shortid from 'shortid';
@@ -117,6 +118,7 @@ interface DataManager {
 	saveMappedIosRemindersList: ( term: any, value: any ) => void;
     iOSSyncedRemindersLists: { [ key: string ]: string };
     setDefaultView: ( view: string | null ) => void;
+	setWpcomToken: ( token: string ) => void;
 }
 
 /**
@@ -125,13 +127,14 @@ interface DataManager {
  * @param data 
  * @param login 
  * @param pass 
+ * @param wpcomToken 
  * @param setData 
  * @param setTodos 
  * @param setRefreshing 
  * @param pushTodoToWP 
  * @returns 
  */
-async function syncData( cachedData: Todo[], data: DataState, login: string, pass: string, setData: React.Dispatch< React.SetStateAction< DataState > >, setTodos: React.Dispatch< React.SetStateAction< Todo[] > >, setRefreshing: React.Dispatch< React.SetStateAction< boolean > >, pushTodoToWP: ( todo: Partial<Todo> ) => Promise< any >, iOSSyncedRemindersLists: { [ key: string ]: string } ) {
+async function syncData( cachedData: Todo[], data: DataState, login: string, pass: string, wpcomToken: string, setData: React.Dispatch< React.SetStateAction< DataState > >, setTodos: React.Dispatch< React.SetStateAction< Todo[] > >, setRefreshing: React.Dispatch< React.SetStateAction< boolean > >, pushTodoToWP: ( todo: Partial<Todo> ) => Promise< any >, iOSSyncedRemindersLists: { [ key: string ]: string } ) {
     const url = getURLForCPT( data.post_types, data.post_type );
 
     if ( ! data.connected || ! url ) {
@@ -155,7 +158,7 @@ async function syncData( cachedData: Todo[], data: DataState, login: string, pas
         // Pull taxonomies.
         const taxonomyUrl = new URL( data.taxonomies[data.taxonomy]._links['wp:items'][0].href );
         taxonomyUrl.searchParams.set( 'per_page', '100' ); // TODO change this to pull all
-        authenticadedFetch( taxonomyUrl.toString(), {}, login, pass )
+        authenticadedFetch( taxonomyUrl.toString(), {}, login, pass, wpcomToken )
         .then( ( response ) => {
             setData( ( prevData ) => {
                 const newData = { ...prevData, taxonomy_terms: response };
@@ -170,9 +173,9 @@ async function syncData( cachedData: Todo[], data: DataState, login: string, pas
         }
         // Pull latest todos.
         Promise.all( [
-            getPagePromise( url, 1, 'publish', [], login, pass ),
-            getPagePromise( url, 1, 'private', [], login, pass ),
-            getPagePromise( url, 1, 'trash', [], login, pass ),
+            getPagePromise( url, 1, 'publish', [], login, pass, wpcomToken ),
+            getPagePromise( url, 1, 'private', [], login, pass, wpcomToken ),
+            getPagePromise( url, 1, 'trash', [], login, pass, wpcomToken ),
         ] )
             .then( ( responses ) => {
                 const response = responses.flat();
@@ -223,6 +226,7 @@ function createDataManager(): DataManager {
 	const [ todos, setTodos ] = useState< Todo[] >( [] );
 	const [ wpURL, setWPURL ] = useState< string >( '' );
 	const [ login, setLogin ] = useState< string >( '' );
+	const [ wpcomToken, setWpcomToken ] = useState< string >( '' );
 	const [ pass, setPass ] = useState< string >( '' );
 	const [ connecting, setConnecting ] = useState( false );
 	const [ posPlugin, setPosPlugin ] = useState( 0 ); // 0 - not detected, 1 - detected, 2 - continuing without it.
@@ -258,7 +262,8 @@ function createDataManager(): DataManager {
                     method: 'DELETE',
                 },
                 login,
-                pass
+                pass,
+                wpcomToken
             );
         } else if (
             typeof todo.id === 'string' &&
@@ -286,7 +291,8 @@ function createDataManager(): DataManager {
                     body: JSON.stringify( payload ),
                 },
                 login,
-                pass
+                pass,
+                wpcomToken
             );
         } else if ( todo.id ) {
             // check for changes.
@@ -299,17 +305,19 @@ function createDataManager(): DataManager {
                     body: JSON.stringify( newData ),
                 },
                 login,
-                pass
+                pass,
+                wpcomToken
             );
         }
         return Promise.reject();
     }
 
 	const loadStoredData = async () => {
-		const [ url, storedLogin, storedPass, savedConfig, savedTodos, savedIosRemindersLists ] =
+		const [ url, storedLogin, storedPass, storedWpcomToken, savedConfig, savedTodos, savedIosRemindersLists ] =
 			await Promise.all( [
 				AsyncStorage.getItem( 'wpurl' ),
 				AsyncStorage.getItem( 'wplogin' ),
+				AsyncStorage.getItem( 'wpcomtoken' ),
 				AsyncStorage.getItem( 'wppass' ),
 				AsyncStorage.getItem( 'config' ),
 				AsyncStorage.getItem( 'todos' ),
@@ -319,6 +327,7 @@ function createDataManager(): DataManager {
 		if ( url ) setWPURL( url );
 		if ( storedLogin ) setLogin( storedLogin );
 		if ( storedPass ) setPass( storedPass );
+		if ( storedWpcomToken ) setWpcomToken( storedWpcomToken );
 
 		let savedConfigObject: DataState = initialData;
 		let savedTodosObject: Todo[] = [];
@@ -338,8 +347,8 @@ function createDataManager(): DataManager {
         }
 
         setLoading( false );
-		if ( url && storedLogin && storedPass && savedConfigObject.connected ) {
-            syncData( savedTodosObject, savedConfigObject, storedLogin, storedPass, setData, setTodos, setRefreshing, pushTodoToWP, iOSSyncedRemindersLists );
+		if ( url && ( storedWpcomToken || ( storedLogin && storedPass ) ) && savedConfigObject.connected ) {
+            syncData( savedTodosObject, savedConfigObject, storedLogin, storedPass, storedWpcomToken, setData, setTodos, setRefreshing, pushTodoToWP, iOSSyncedRemindersLists );
 		}
 	};
 
@@ -422,32 +431,32 @@ function createDataManager(): DataManager {
 
     // This is the main sync function.
 	const sync = useCallback( async () => {
-        syncData( todos, data, login, pass, setData, setTodos, setRefreshing, pushTodoToWP, iOSSyncedRemindersLists );
-	}, [ data, todos, login, pass ] );
+        syncData( todos, data, login, pass, wpcomToken, setData, setTodos, setRefreshing, pushTodoToWP, iOSSyncedRemindersLists );
+	}, [ data, todos, login, pass, wpcomToken ] );
 
-	const connectWP = useCallback( () => {
+	const connectWP = useCallback( ( wpcomToken: string, wpcomData ) => {
 		const username = login;
 		const password = pass;
 		const url = wpURL;
 		//normalize url, add https if not present
 		setConnecting( true );
-		const siteData = fetch( normalizeUrl( url, 'https' ) + `?rest_route=/` )
+		let siteData;
+		if ( wpcomToken.length > 0 && wpcomData ) {
+			console.log('WPCOM Data', wpcomData);
+			data[ 'site_home' ] = wpcomData.URL;
+			if ( wpcomData.icon ) {
+				data[ 'site_icon_url' ] = wpcomData.icon.img;
+			}
+			data[ 'site_title' ] = wpcomData.name;
+			setWPURL( wpcomData.URL );
+			setData( ( oldData ) => ( { ...oldData, ...data } ) );
+			siteData = fetch( 'https://public-api.wordpress.com/wp/v2/sites/' + wpcomData.ID + '/' ).then( resp => resp.json() );
+		} else {
+			siteData = fetch( normalizeUrl( url, 'https' ) + `?rest_route=/` )
 			.catch( ( err ) =>
 				fetch( normalizeUrl( url, 'http' ) + `?rest_route=/` )
 			)
 			.catch( ( err ) => {
-				// We are going to deal with special snowflake of WPCOM later.
-				// const host = (new URL( normalizeUrl( url, 'https' ) ) ).hostname;
-				// const wpcomURL = 'https://public-api.wordpress.com/wpcom/v2/sites/' + host + '/';
-				// return fetch( wpcomURL );
-
-				// Could not find proper WP REST API.
-				if ( url.indexOf( '.wordpress.com' ) > -1 ) {
-					return Promise.reject( {
-						message:
-							'This site is WordPress.com site without plugins. Unfortunately, these sites do not support application passwords.',
-					} );
-				}
 				return Promise.reject( {
 					message:
 						'I had trouble connecting to REST API on this site.',
@@ -455,6 +464,7 @@ function createDataManager(): DataManager {
 			} )
 			.then( ( response ) => response.json() )
 			.then( ( response ) => {
+				console.log('res', response);
 				data[ 'site_home' ] = response.home;
 				data[ 'site_icon_url' ] = response.site_icon_url;
 				data[ 'site_title' ] = response.name;
@@ -462,14 +472,17 @@ function createDataManager(): DataManager {
 				setData( ( oldData ) => ( { ...oldData, ...data } ) );
 				return Promise.resolve( response );
 			} );
+		}
+		siteData.then( data => {console.log('ROUTES', data.routes, getLinkToEndpoint( data.routes, '/users/me' ) )});
 
 		siteData
 			.then( ( site ) =>
 				authenticadedFetch(
-					site.routes[ '/wp/v2/users/me' ]._links.self[ 0 ].href,
+					getLinkToEndpoint( site.routes, '/users/me' ),
 					{},
 					username,
-					password
+					password,
+					wpcomToken
 				)
 			)
 			.then( ( response ) => {
@@ -481,6 +494,7 @@ function createDataManager(): DataManager {
 				AsyncStorage.setItem( 'wpurl', url );
 				AsyncStorage.setItem( 'wplogin', username );
 				AsyncStorage.setItem( 'wppass', password );
+				AsyncStorage.setItem( 'wpcomtoken', wpcomToken );
 				setConnectingError( '' );
 
 				return Promise.resolve( siteData );
@@ -488,21 +502,21 @@ function createDataManager(): DataManager {
 			.then( ( site ) =>
 				Promise.all( [
 					authenticadedFetch(
-						site.routes[ '/wp/v2/types' ]._links.self[ 0 ].href,
+						getLinkToEndpoint( site.routes, '/types' ),
 						{},
 						username,
-						password
+						password,
+						wpcomToken
 					),
 					authenticadedFetch(
-						site.routes[ '/wp/v2/taxonomies' ]._links.self[ 0 ]
-							.href,
+						getLinkToEndpoint( site.routes, '/taxonomies'),
 						{},
 						username,
-						password
+						password,
+						wpcomToken
 					),
 				] )
-			)
-			.then( ( response ) => {
+			).then( ( response ) => {
 				console.log(
 					'POST TYPES',
 					JSON.stringify( Object.values( response[ 0 ] ) )
@@ -537,7 +551,7 @@ function createDataManager(): DataManager {
 				setConnectingError( error.message );
 				setConnecting( false );
 			} );
-	}, [ login, pass, wpURL ] );
+	}, [ login, pass, wpURL, wpcomToken ] );
 
 	const logOut = useCallback( () => {
 		setData( initialData );
@@ -579,6 +593,7 @@ function createDataManager(): DataManager {
 		saveMappedIosRemindersList,
         iOSSyncedRemindersLists,
         setDefaultView,
+		setWpcomToken
 	};
 }
 
