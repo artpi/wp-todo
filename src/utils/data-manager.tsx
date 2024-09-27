@@ -153,8 +153,9 @@ async function syncData( cachedData: Todo[], data: DataState, login: string, pas
         console.log( 'Synced Data', JSON.stringify( responses ) );
         setRefreshing( true );
         // Pull taxonomies.
-        authenticadedFetch( data.taxonomies[ data.taxonomy ]._links[ 'wp:items' ][ 0 ].href +
-            '?per_page=100', {}, login, pass )
+        const taxonomyUrl = new URL( data.taxonomies[data.taxonomy]._links['wp:items'][0].href );
+        taxonomyUrl.searchParams.set( 'per_page', '100' ); // TODO change this to pull all
+        authenticadedFetch( taxonomyUrl.toString(), {}, login, pass )
         .then( ( response ) => {
             setData( ( prevData ) => {
                 const newData = { ...prevData, taxonomy_terms: response };

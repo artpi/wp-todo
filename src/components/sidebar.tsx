@@ -108,9 +108,8 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 	const handlePressMenuAbout = useCallback( () => {
 		navigation.navigate( 'About' );
 	}, [ navigation ] );
-
-	const starred = data.taxonomy_terms.filter( ( t ) => ( t.meta && t.meta.flag === 'star' ) );
-	const terms = compactTerms( data.taxonomy_terms, todos );
+	const starred = Object.keys( data.taxonomy_terms ).length ? data.taxonomy_terms.filter( ( t ) => ( t.meta && t.meta.flag === 'star' ) ) : [];
+	const terms = Object.keys( data.taxonomy_terms ).length ? compactTerms( data.taxonomy_terms, todos ) : [];
 	return (
 		<AnimatedColorBox
 			safeArea
@@ -180,7 +179,7 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 						All Tasks
 					</MenuButton>
 					{ <Divider/>}
-					{ data.taxonomy_terms &&
+					{ Object.keys( data.taxonomy_terms ).length &&
 						terms
 							.filter( ( t ) => ( showEmpty || t.totalChildrenCount > 0 ) )
 							.map( ( t ) => ( <Term key={ t.slug } showEmpty={ showEmpty } taxonomy={ t } state={ state } navigation={ navigation } /> ) )
