@@ -8,10 +8,10 @@ export function authenticadedFetch(
 	wpcomToken: string
 ): Promise< any > {
 	let authorization = '';
-	if( wpcomToken.length > 0 ) {
-		authorization = 'Bearer ' + wpcomToken;  
-	} else if ( username.length> 0) {
+	if ( username.length > 0) {
 		authorization = 'Basic ' + encode( username + ':' + password );
+	} else if( wpcomToken.length > 0 ) {
+		authorization = 'Bearer ' + wpcomToken;  
 	}
 
 	const args = {
@@ -89,11 +89,11 @@ export function getPagePromise(
   pass: string,
   wpcomToken: string
 ): Promise<[]> {
-  const modifiedURL = new URL( url );
-  modifiedURL.searchParams.set( 'per_page', '100' );
-  modifiedURL.searchParams.set( 'context', 'edit' );
-  modifiedURL.searchParams.set( 'page', page.toString() );
-  if ( status ) {
+	const modifiedURL = new URL( url );
+	modifiedURL.searchParams.set( 'per_page', '100' );
+	modifiedURL.searchParams.set( 'context', 'edit' );
+	modifiedURL.searchParams.set( 'page', page.toString() );
+	if ( status ) {
     modifiedURL.searchParams.set( 'status', status );
   }
   return authenticadedFetch(

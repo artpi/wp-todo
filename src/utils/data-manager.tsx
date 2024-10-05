@@ -328,6 +328,7 @@ function createDataManager(): DataManager {
                 AsyncStorage.getItem( 'ios_reminders_lists' ),
 			] );
 
+			console.log( 'storedData', url, storedLogin, storedPass, storedWpcomToken);
 		if ( url ) setWPURL( url );
 		if ( storedLogin ) setLogin( storedLogin );
 		if ( storedPass ) setPass( storedPass );
@@ -563,11 +564,14 @@ function createDataManager(): DataManager {
 		setWPURL( '' );
 		setLogin( '' );
 		setPass( '' );
+		setWpcomToken( '' );
 		AsyncStorage.removeItem( 'wpurl' );
 		AsyncStorage.removeItem( 'wplogin' );
 		AsyncStorage.removeItem( 'wppass' );
 		AsyncStorage.removeItem( 'config' );
 		AsyncStorage.removeItem( 'todos' );
+		AsyncStorage.removeItem( 'ios_reminders_lists' );
+		AsyncStorage.removeItem( 'wpcomtoken' );
 	}, [] );
 
 	return {
