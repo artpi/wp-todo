@@ -26,6 +26,7 @@ import { normalizeUrl } from '../utils/wpapi';
 import { FontAwesome5, Feather } from '@expo/vector-icons';
 import LinkButton from '../components/link-button';
 import { useDataManagerContext } from '../utils/data-manager';
+import WpcomConnect from '../components/wpcom-connect';
 
 
 export default function SetupScreen() {
@@ -78,31 +79,7 @@ export default function SetupScreen() {
 		},
 		[ setPass ]
 	);
-	const [ request, response, promptAsync ] = useAuthRequest(
-		{
-		  clientId: '106439',
-		  responseType: ResponseType.Token,
-		  redirectUri: makeRedirectUri( {
-			scheme: 'wptodo',
-		  } ),
-		  extraParams: {
-			blog: wpcomData?.ID ?? ''
-		  }
-		},
-		{
-			authorizationEndpoint: "https://public-api.wordpress.com/oauth2/authorize",
-			tokenEndpoint: "https://public-api.wordpress.com/oauth2/token",
-		}
-	);
-
-	useEffect(() => {
-		if ( response?.type === 'success' ) {
-			const { access_token } = response.params;
-			console.log('Access Token:', access_token);
-			setWpcomToken( access_token );
-			connectWP( access_token, wpcomData );
-		}
-	}, [ response ]);
+	
 
 	return (
 		<AnimatedColorBox
@@ -292,30 +269,7 @@ export default function SetupScreen() {
 								</>
 							) }
 							{ wpcomData && (
-								<>
-									<Heading p={ 6 } size="m">
-										WordPress.com site detected. Please chose your site while connecting on WordPress.com.
-									</Heading>
-									<Button
-										colorScheme="secondary"
-										margin={ '10%' }
-										size="md"
-										borderRadius="full"
-										marginLeft={ '6' }
-										marginRight={ '6' }
-										leftIcon={
-											<FontAwesome5
-												name="wordpress-simple"
-												size={ 24 }
-												color={ 'white' }
-												opacity={ 0.5 }
-											/>
-										}
-										onPress={ () => promptAsync() }
-									>
-										{ `Connect to ${wpcomData.name}` }
-									</Button>
-								</>
+								<WpcomConnect wpcomData={ wpcomData } />
 							) }
 						</>
 					) }
