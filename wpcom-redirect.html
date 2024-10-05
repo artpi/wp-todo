@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirect to wptodo</title>
+    <script>
+        // JavaScript code to pass query string and hash to wptodo://wpcom-connect
+        (function() {
+            // Get the current URL
+            var currentUrl = window.location.href;
+
+            // Extract the query string (everything after '?')
+            var queryString = window.location.search;
+
+            // Extract the hash string (everything after '#')
+            var hashString = window.location.hash;
+
+            // Create the custom URL for wptodo://wpcom-connect
+            var customUrl = 'wptodo://wpcom-connect' + queryString + hashString;
+
+            // Redirect to the custom URL
+            window.location.href = customUrl;
+        })();
+    </script>
+</head>
+<body>
+    <h1>Redirecting to wptodo</h1>
+    <p>If you are not redirected automatically, <a href="#">click here</a>.</p>
+</body>
+</html>
