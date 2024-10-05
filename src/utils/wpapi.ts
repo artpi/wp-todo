@@ -8,10 +8,10 @@ export function authenticadedFetch(
 	wpcomToken: string
 ): Promise< any > {
 	let authorization = '';
-	if ( username.length > 0) {
+	if ( username.length > 0 ) {
 		authorization = 'Basic ' + encode( username + ':' + password );
-	} else if( wpcomToken.length > 0 ) {
-		authorization = 'Bearer ' + wpcomToken;  
+	} else if ( wpcomToken.length > 0 ) {
+		authorization = 'Bearer ' + wpcomToken;
 	}
 
 	const args = {
@@ -34,9 +34,11 @@ export function authenticadedFetch(
 }
 
 export function getLinkToEndpoint( routes, route ) {
-	const matchingRoute = Object.keys(routes).find(path => path.endsWith(route));
-	if (matchingRoute) {
-		return routes[matchingRoute]._links.self[0].href;
+	const matchingRoute = Object.keys( routes ).find( ( path ) =>
+		path.endsWith( route )
+	);
+	if ( matchingRoute ) {
+		return routes[ matchingRoute ]._links.self[ 0 ].href;
 	}
 	return null;
 }
@@ -81,34 +83,42 @@ export function normalizeUrl( url: string, protocol: string = 'http' ): string {
 }
 
 export function getPagePromise(
-  url: string,
-  page: number,
-  status: string | null,
-  previousData: [],
-  login: string,
-  pass: string,
-  wpcomToken: string
-): Promise<[]> {
+	url: string,
+	page: number,
+	status: string | null,
+	previousData: [],
+	login: string,
+	pass: string,
+	wpcomToken: string
+): Promise< [] > {
 	const modifiedURL = new URL( url );
 	modifiedURL.searchParams.set( 'per_page', '100' );
 	modifiedURL.searchParams.set( 'context', 'edit' );
 	modifiedURL.searchParams.set( 'page', page.toString() );
 	if ( status ) {
-    modifiedURL.searchParams.set( 'status', status );
-  }
-  return authenticadedFetch(
-    modifiedURL.toString(),
-    {},
-    login,
-    pass,
-	wpcomToken
-  ).then( ( response ) => {
-    const data = previousData.concat( response );
-    if ( response.length < 100 ) {
-      // All results
-      return Promise.resolve( data );
-    } else {
-      return getPagePromise( url, page + 1, status, data, login, pass, wpcomToken );
-    }
-  } );
+		modifiedURL.searchParams.set( 'status', status );
+	}
+	return authenticadedFetch(
+		modifiedURL.toString(),
+		{},
+		login,
+		pass,
+		wpcomToken
+	).then( ( response ) => {
+		const data = previousData.concat( response );
+		if ( response.length < 100 ) {
+			// All results
+			return Promise.resolve( data );
+		} else {
+			return getPagePromise(
+				url,
+				page + 1,
+				status,
+				data,
+				login,
+				pass,
+				wpcomToken
+			);
+		}
+	} );
 }

@@ -26,9 +26,7 @@ import { useDataManagerContext } from '../utils/data-manager';
 
 function countTodos( todos, taxonomy ) {
 	return todos.filter( ( t ) =>
-		t.terms
-			? t.terms.indexOf( taxonomy.id ) !== -1
-			: []
+		t.terms ? t.terms.indexOf( taxonomy.id ) !== -1 : []
 	).length;
 }
 
@@ -52,45 +50,62 @@ function compactTerms( terms, todos ) {
 	return parents;
 }
 
-const Term = ( { taxonomy, showEmpty, state, navigation, icon, indent = 0 } ) => {
+const Term = ( {
+	taxonomy,
+	showEmpty,
+	state,
+	navigation,
+	icon,
+	indent = 0,
+} ) => {
 	if ( ! icon ) {
 		icon = 'check-circle';
 	}
 	return (
 		<>
-		<MenuButton
-			indent={ indent > 1 ? ( indent - 1 ) * 4: 0 }
-			active={
-				state.routes[ state.index ]
-					.params &&
-				state.routes[ state.index ].params
-					?.term === taxonomy.slug
-			}
-			onPress={ () => {
-				navigation.navigate( 'Main', {
-					term: taxonomy.slug,
-				} );
-			} }
-			icon={ indent === 0 ? icon : null }
-			key={ taxonomy.slug }
-			justifyContent={ 'space-between' }
-			endIcon={
-				<Badge
-					colorScheme="default"
-					rounded="full"
-					variant="solid"
-					alignSelf="flex-end"
-				>
-					{ taxonomy.todoCount }
-				</Badge>
-			}
-		>
-			{ taxonomy.name }
-		</MenuButton>
-		{ taxonomy.children && taxonomy.children.filter( ( t ) => ( showEmpty || t.totalChildrenCount > 0 ) ).map( ( t ) => ( <Term key={ t.slug } showEmpty={ showEmpty } taxonomy={ t } state={ state } navigation={ navigation } indent={ indent + 1 } /> ) ) }
+			<MenuButton
+				indent={ indent > 1 ? ( indent - 1 ) * 4 : 0 }
+				active={
+					state.routes[ state.index ].params &&
+					state.routes[ state.index ].params?.term === taxonomy.slug
+				}
+				onPress={ () => {
+					navigation.navigate( 'Main', {
+						term: taxonomy.slug,
+					} );
+				} }
+				icon={ indent === 0 ? icon : null }
+				key={ taxonomy.slug }
+				justifyContent={ 'space-between' }
+				endIcon={
+					<Badge
+						colorScheme="default"
+						rounded="full"
+						variant="solid"
+						alignSelf="flex-end"
+					>
+						{ taxonomy.todoCount }
+					</Badge>
+				}
+			>
+				{ taxonomy.name }
+			</MenuButton>
+			{ taxonomy.children &&
+				taxonomy.children
+					.filter( ( t ) => showEmpty || t.totalChildrenCount > 0 )
+					.map( ( t ) => (
+						<Term
+							key={ t.slug }
+							showEmpty={ showEmpty }
+							taxonomy={ t }
+							state={ state }
+							navigation={ navigation }
+							indent={ indent + 1 }
+						/>
+					) ) }
 		</>
 	);
-}
+};
 
 const Sidebar = ( props: DrawerContentComponentProps ) => {
 	const { state, navigation } = props;
@@ -108,8 +123,14 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 	const handlePressMenuAbout = useCallback( () => {
 		navigation.navigate( 'About' );
 	}, [ navigation ] );
-	const starred = Object.keys( data.taxonomy_terms ).length ? data.taxonomy_terms.filter( ( t ) => ( t.meta && t.meta.flag === 'star' ) ) : [];
-	const terms = Object.keys( data.taxonomy_terms ).length ? compactTerms( data.taxonomy_terms, todos ) : [];
+	const starred = Object.keys( data.taxonomy_terms ).length
+		? data.taxonomy_terms.filter(
+				( t ) => t.meta && t.meta.flag === 'star'
+		  )
+		: [];
+	const terms = Object.keys( data.taxonomy_terms ).length
+		? compactTerms( data.taxonomy_terms, todos )
+		: [];
 
 	return (
 		<AnimatedColorBox
@@ -156,9 +177,16 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 					<Heading mb={ 4 } size="l">
 						{ data.site_title }
 					</Heading>
-					{
-						starred.map( ( t ) => ( <Term key={ 'starred-' + t.slug } showEmpty={ true } taxonomy={ t } icon="star" state={ state } navigation={ navigation } /> ) )
-					}
+					{ starred.map( ( t ) => (
+						<Term
+							key={ 'starred-' + t.slug }
+							showEmpty={ true }
+							taxonomy={ t }
+							icon="star"
+							state={ state }
+							navigation={ navigation }
+						/>
+					) ) }
 					<MenuButton
 						active={
 							currentRoute === 'Main' &&
@@ -179,12 +207,22 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 					>
 						All Tasks
 					</MenuButton>
-					{ <Divider/>}
-					{ data.taxonomy && Object.keys( data.taxonomy_terms ).length &&
+					{ <Divider /> }
+					{ data.taxonomy &&
+						Object.keys( data.taxonomy_terms ).length &&
 						terms
-							.filter( ( t ) => ( showEmpty || t.totalChildrenCount > 0 ) )
-							.map( ( t ) => ( <Term key={ t.slug } showEmpty={ showEmpty } taxonomy={ t } state={ state } navigation={ navigation } /> ) )
-					}
+							.filter(
+								( t ) => showEmpty || t.totalChildrenCount > 0
+							)
+							.map( ( t ) => (
+								<Term
+									key={ t.slug }
+									showEmpty={ showEmpty }
+									taxonomy={ t }
+									state={ state }
+									navigation={ navigation }
+								/>
+							) ) }
 					<MenuButton
 						active={ false }
 						icon="external-link"

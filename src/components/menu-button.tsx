@@ -9,7 +9,13 @@ interface Props extends IButtonProps {
 	children: React.ReactNode;
 }
 
-const MenuButton = ( { indent = 0, active, icon, children, ...props }: Props ) => {
+const MenuButton = ( {
+	indent = 0,
+	active,
+	icon,
+	children,
+	...props
+}: Props ) => {
 	return (
 		<Button
 			size="lg"
@@ -36,7 +42,13 @@ const MenuButton = ( { indent = 0, active, icon, children, ...props }: Props ) =
 			variant="solid"
 			justifyContent="flex-start"
 			leftIcon={
-				<Icon as={ Feather } name={ icon } size="sm" opacity={ 0.5 } color="secondary.500" />
+				<Icon
+					as={ Feather }
+					name={ icon }
+					size="sm"
+					opacity={ 0.5 }
+					color="secondary.500"
+				/>
 			}
 			{ ...props }
 		>

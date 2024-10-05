@@ -101,7 +101,9 @@ export const AnimatedTaskItem = ( props: TaskItemProps ) => {
 
 function TermBadge( { term, navigation } ) {
 	return (
-		<Pressable onPress={ () => navigation.navigate( 'Main', { term: term.slug } ) }>
+		<Pressable
+			onPress={ () => navigation.navigate( 'Main', { term: term.slug } ) }
+		>
 			<Badge colorScheme="info" variant="outline" rounded="full">
 				{ term.name }
 			</Badge>
@@ -145,7 +147,24 @@ export default function TaskList( props: TaskListProps ) {
 							key={ item.id }
 							data={ item }
 							terms={
-								item.terms ? item.terms.filter( term => ( term !== filter ) ).map( ( term ) => data.taxonomy_terms.find( ( t ) => t.id === term ) ).map( t => ( <TermBadge key={ t.id } term={ t } navigation={ navigation } /> ) ) : []
+								item.terms
+									? item.terms
+											.filter(
+												( term ) => term !== filter
+											)
+											.map( ( term ) =>
+												data.taxonomy_terms.find(
+													( t ) => t.id === term
+												)
+											)
+											.map( ( t ) => (
+												<TermBadge
+													key={ t.id }
+													term={ t }
+													navigation={ navigation }
+												/>
+											) )
+									: []
 							}
 							simultaneousHandlers={ refScrollView }
 							isEditing={ item.id === editingItemId }

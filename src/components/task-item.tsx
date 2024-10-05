@@ -1,6 +1,10 @@
 import React, { useCallback } from 'react';
 import { PanGestureHandlerProps } from 'react-native-gesture-handler';
-import { NativeSyntheticEvent, TextInputChangeEventData, Linking } from 'react-native';
+import {
+	NativeSyntheticEvent,
+	TextInputChangeEventData,
+	Linking,
+} from 'react-native';
 import {
 	Pressable,
 	Box,
@@ -13,7 +17,7 @@ import {
 	Checkbox,
 	Badge,
 	VStack,
-	Link
+	Link,
 } from 'native-base';
 import AnimatedTaskLabel from './animated-task-label';
 import SwipableView from './swipable-view';
@@ -158,28 +162,52 @@ const TaskItem = ( props: Props ) => {
 								isTruncated={ false }
 								ellipsizeMode="tail"
 								maxW={ 320 }
-								color={ data.done ? doneTextColor : activeTextColor }
+								color={
+									data.done ? doneTextColor : activeTextColor
+								}
 							>
 								{ data.subject }
 							</Text>
 						</Pressable>
 						{ data.note && data.note.length > 0 && (
-							<Text my={ 2 } fontStyle={ 'italic' } color={ 'gray.500' } >{ data.note }</Text>
+							<Text
+								my={ 2 }
+								fontStyle={ 'italic' }
+								color={ 'gray.500' }
+							>
+								{ data.note }
+							</Text>
 						) }
 						<HStack space={ 1 }>
-							{
-								data.meta?.url && (
-									<Pressable onPress={ () => Linking.openURL( data.meta?.url ) }>
-										<Badge leftIcon={<Icon as={Feather} name={ getIconForUrl( data.meta?.url ) } size="sm" />} colorScheme="secondary" variant="solid" rounded="full">
-											{ new URL( data.meta.url )?.host?.replace( 'www.', '' ) }
-										</Badge>
-									</Pressable>
-								)
-							}
+							{ data.meta?.url && (
+								<Pressable
+									onPress={ () =>
+										Linking.openURL( data.meta?.url )
+									}
+								>
+									<Badge
+										leftIcon={
+											<Icon
+												as={ Feather }
+												name={ getIconForUrl(
+													data.meta?.url
+												) }
+												size="sm"
+											/>
+										}
+										colorScheme="secondary"
+										variant="solid"
+										rounded="full"
+									>
+										{ new URL(
+											data.meta.url
+										)?.host?.replace( 'www.', '' ) }
+									</Badge>
+								</Pressable>
+							) }
 							{ terms }
 						</HStack>
 					</VStack>
-					
 				) }
 			</HStack>
 		</SwipableView>

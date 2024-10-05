@@ -1,6 +1,10 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri, useAuthRequest, ResponseType } from 'expo-auth-session';
+import {
+	makeRedirectUri,
+	useAuthRequest,
+	ResponseType,
+} from 'expo-auth-session';
 import { Platform, KeyboardAvoidingView } from 'react-native';
 import {
 	useColorModeValue,
@@ -28,7 +32,6 @@ import LinkButton from '../components/link-button';
 import { useDataManagerContext } from '../utils/data-manager';
 import WpcomConnect from '../components/wpcom-connect';
 
-
 export default function SetupScreen() {
 	const {
 		wpURL,
@@ -45,7 +48,7 @@ export default function SetupScreen() {
 		connectWP,
 		posPlugin,
 		setPosPlugin,
-		setWpcomToken
+		setWpcomToken,
 	} = useDataManagerContext();
 	WebBrowser.maybeCompleteAuthSession();
 	const pickerStyle = {
@@ -79,7 +82,6 @@ export default function SetupScreen() {
 		},
 		[ setPass ]
 	);
-	
 
 	return (
 		<AnimatedColorBox
@@ -165,54 +167,115 @@ export default function SetupScreen() {
 									onPress={ () => {
 										{
 											function tryWpcom() {
-												const host = ( new URL( normalizeUrl( wpURL, 'https' ) ) ).hostname;
+												const host = new URL(
+													normalizeUrl(
+														wpURL,
+														'https'
+													)
+												).hostname;
 												console.log( 'WPCOM', host );
-												return fetch( `https://public-api.wordpress.com/rest/v1.1/sites/${host}` )
-												.then( response => response.json() )
-												.then( response => {
-													console.log( 'WPCOM', response );
-													if ( response.ID ) {
-														setWpcomData( response );
-														return;
-													}
-													setConnectingError( 'Unknown site' );
-												 } );
+												return fetch(
+													`https://public-api.wordpress.com/rest/v1.1/sites/${ host }`
+												)
+													.then( ( response ) =>
+														response.json()
+													)
+													.then( ( response ) => {
+														console.log(
+															'WPCOM',
+															response
+														);
+														if ( response.ID ) {
+															setWpcomData(
+																response
+															);
+															return;
+														}
+														setConnectingError(
+															'Unknown site'
+														);
+													} );
 											}
 
 											setConnectingError( '' );
 											setAppPasswordUrl( '' );
 											setWpcomData( null );
-											const probe = fetch( normalizeUrl( wpURL, 'https' ) + `?rest_route=/` )
-											.catch( ( err ) =>
-												fetch( normalizeUrl( wpURL, 'http' ) + `?rest_route=/` )
+											const probe = fetch(
+												normalizeUrl( wpURL, 'https' ) +
+													`?rest_route=/`
+											).catch( ( err ) =>
+												fetch(
+													normalizeUrl(
+														wpURL,
+														'http'
+													) + `?rest_route=/`
+												)
 											);
 
-											probe.catch( tryWpcom )
-											.catch( error => console.log( 'Error', error ) );
-											
-											probe.then( response => {
-												if ( ! response.ok ) {
-													setConnectingError( 'Unknown site' );
-													return Promise.reject( 'Unknown site' );
-												}
-												
-												const contentType = response.headers.get('content-type');
-												if ( contentType && contentType.includes('application/json' ) ) {
-													return response.json();
-												}
-												tryWpcom();
-												return Promise.reject( 'Not a JSON response' );
-											} )
-											.then( response => {
-												if ( response?.authentication?.['application-passwords']?.endpoints?.authorization ) {
-													setAppPasswordUrl( response.authentication['application-passwords'].endpoints.authorization );
-													return;
-												}
-												setConnectingError( 'This is a WordPress site, but it does not support application passwords.' );
-											} )
-											.catch( error => {
-												console.log( 'Unknown site',error );
-											} );
+											probe
+												.catch( tryWpcom )
+												.catch( ( error ) =>
+													console.log(
+														'Error',
+														error
+													)
+												);
+
+											probe
+												.then( ( response ) => {
+													if ( ! response.ok ) {
+														setConnectingError(
+															'Unknown site'
+														);
+														return Promise.reject(
+															'Unknown site'
+														);
+													}
+
+													const contentType =
+														response.headers.get(
+															'content-type'
+														);
+													if (
+														contentType &&
+														contentType.includes(
+															'application/json'
+														)
+													) {
+														return response.json();
+													}
+													tryWpcom();
+													return Promise.reject(
+														'Not a JSON response'
+													);
+												} )
+												.then( ( response ) => {
+													if (
+														response
+															?.authentication?.[
+															'application-passwords'
+														]?.endpoints
+															?.authorization
+													) {
+														setAppPasswordUrl(
+															response
+																.authentication[
+																'application-passwords'
+															].endpoints
+																.authorization
+														);
+														return;
+													}
+													setConnectingError(
+														'This is a WordPress site, but it does not support application passwords.'
+													);
+												} )
+												.catch( ( error ) => {
+													console.log(
+														'Unknown site',
+														error
+													);
+												} );
 										}
 									} }
 								>

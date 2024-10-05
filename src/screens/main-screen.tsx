@@ -6,9 +6,9 @@ import {
 	Fab,
 	FormControl,
 	Input,
-  Switch,
+	Switch,
 	Select,
-  Text,
+	Text,
 } from 'native-base';
 import { AntDesign } from '@expo/vector-icons';
 import AnimatedColorBox from '../components/animated-color-box';
@@ -28,8 +28,8 @@ export default function MainScreen( { route, navigation } ) {
 		handleToggleTaskItem,
 		handleChangeTaskItemSubject,
 		createEmptyTodo,
-    setDefaultView,
-    iOSSyncedRemindersLists
+		setDefaultView,
+		iOSSyncedRemindersLists,
 	} = useDataManagerContext();
 
 	const [ editingItemId, setEditingItemId ] = useState< string | null >(
@@ -39,9 +39,9 @@ export default function MainScreen( { route, navigation } ) {
 	let title = 'All todos';
 	let filter = 0;
 	let term = null;
-  if( ! route.params && data.default_term ) {
-    route.params = { term: data.default_term };
-  }
+	if ( ! route.params && data.default_term ) {
+		route.params = { term: data.default_term };
+	}
 
 	if ( route.params?.term && data && data.taxonomy_terms ) {
 		term = data.taxonomy_terms.find(
@@ -83,7 +83,8 @@ export default function MainScreen( { route, navigation } ) {
 								</FormControl.Label>
 								<Select
 									selectedValue={
-										iOSSyncedRemindersLists[ term.id ] || 'no'
+										iOSSyncedRemindersLists[ term.id ] ||
+										'no'
 									}
 									minWidth="200"
 									accessibilityLabel="Dont sync"
@@ -113,11 +114,24 @@ export default function MainScreen( { route, navigation } ) {
 											)
 										) }
 								</Select>
-                <FormControl.Label>
-                  <Switch size="sm" isChecked={ data.default_term === route.params.term } onToggle={ ( newData ) => setDefaultView( newData ? route.params.term : null ) } colorScheme="blue" />
-                  <Text>Default View</Text>
-                </FormControl.Label>
-                
+								<FormControl.Label>
+									<Switch
+										size="sm"
+										isChecked={
+											data.default_term ===
+											route.params.term
+										}
+										onToggle={ ( newData ) =>
+											setDefaultView(
+												newData
+													? route.params.term
+													: null
+											)
+										}
+										colorScheme="blue"
+									/>
+									<Text>Default View</Text>
+								</FormControl.Label>
 							</FormControl>
 						</>
 					)
