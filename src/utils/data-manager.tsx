@@ -147,7 +147,7 @@ async function syncData( cachedData: Todo[], data: DataState, login: string, pas
         const dataToSync = cachedData
             .filter( ( todo ) => todo.dirty )
             .filter( ( todo ) => todo.subject.length > 0 );
-        console.log( 'Trigggering sync' );
+        console.log( 'Trigggering sync', data );
         updatePromises = dataToSync.map( pushTodoToWP );
     }
 
@@ -156,16 +156,19 @@ async function syncData( cachedData: Todo[], data: DataState, login: string, pas
         console.log( 'Synced Data', JSON.stringify( responses ) );
         setRefreshing( true );
         // Pull taxonomies.
-        const taxonomyUrl = new URL( data.taxonomies[data.taxonomy]._links['wp:items'][0].href );
-        taxonomyUrl.searchParams.set( 'per_page', '100' ); // TODO change this to pull all
-        authenticadedFetch( taxonomyUrl.toString(), {}, login, pass, wpcomToken )
-        .then( ( response ) => {
-            setData( ( prevData ) => {
-                const newData = { ...prevData, taxonomy_terms: response };
-                AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
-                return newData;
-            } );
-        } );
+		if ( data.taxonomy ) {
+			const taxonomyUrl = new URL( data.taxonomies[data.taxonomy]._links['wp:items'][0].href );
+			taxonomyUrl.searchParams.set( 'per_page', '100' ); // TODO change this to pull all
+			authenticadedFetch( taxonomyUrl.toString(), {}, login, pass, wpcomToken )
+			.then( ( response ) => {
+				setData( ( prevData ) => {
+					const newData = { ...prevData, taxonomy_terms: response };
+					AsyncStorage.setItem( 'config', JSON.stringify( newData ) );
+					return newData;
+				} );
+			} );
+		}
+
 
         // Update iOS reminders calendars if needed.
         if ( Platform.OS === 'ios' ) {
@@ -255,6 +258,7 @@ function createDataManager(): DataManager {
 
     function pushTodoToWP( todo: Partial<Todo> ) {
         const url = getURLForCPT( data.post_types, data.post_type ) || '';
+		console.log( 'Pushing todo to WP', todo.id, url );
     	if ( todo.deleted || todo.done ) {
             return authenticadedFetch(
                 url + '/' + todo.id,
@@ -317,8 +321,8 @@ function createDataManager(): DataManager {
 			await Promise.all( [
 				AsyncStorage.getItem( 'wpurl' ),
 				AsyncStorage.getItem( 'wplogin' ),
-				AsyncStorage.getItem( 'wpcomtoken' ),
 				AsyncStorage.getItem( 'wppass' ),
+				AsyncStorage.getItem( 'wpcomtoken' ),
 				AsyncStorage.getItem( 'config' ),
 				AsyncStorage.getItem( 'todos' ),
                 AsyncStorage.getItem( 'ios_reminders_lists' ),

@@ -180,7 +180,7 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 						All Tasks
 					</MenuButton>
 					{ <Divider/>}
-					{ Object.keys( data.taxonomy_terms ).length &&
+					{ data.taxonomy && Object.keys( data.taxonomy_terms ).length &&
 						terms
 							.filter( ( t ) => ( showEmpty || t.totalChildrenCount > 0 ) )
 							.map( ( t ) => ( <Term key={ t.slug } showEmpty={ showEmpty } taxonomy={ t } state={ state } navigation={ navigation } /> ) )

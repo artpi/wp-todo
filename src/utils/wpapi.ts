@@ -54,6 +54,7 @@ export function getURLForCPT(
 ): string | undefined {
 	const cpt = post_types.find( ( type ) => type.slug === postType );
 	if ( ! cpt ) {
+		console.log( 'cpt', post_types, postType );
 		return undefined;
 	}
 	return cpt._links[ 'wp:items' ][ 0 ].href;
