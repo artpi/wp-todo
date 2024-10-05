@@ -16,6 +16,7 @@ export default function WpcomConnect( { wpcomData }: { wpcomData: any } ) {
 			clientId: '106439',
 			responseType: ResponseType.Token,
 			redirectUri: makeRedirectUri( {
+				native: 'https://artpi.github.io/wp-todo/wpcom-redirect.html',
 				scheme: 'wptodo',
 				path: 'wpcom-connect',
 			} ),
