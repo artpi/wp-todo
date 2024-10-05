@@ -40,6 +40,7 @@ export default function SetupScreen() {
 		setData,
 		connecting,
 		connectingError,
+		setConnectingError,
 		connectWP,
 		posPlugin,
 		setPosPlugin,
@@ -57,6 +58,7 @@ export default function SetupScreen() {
 	}
 
 	const [ wpcomData, setWpcomData ] = useState( null );
+	const [ appPasswordUrl, setAppPasswordUrl ] = useState( '' );
 
 	const handleChangeWPURL = useCallback(
 		( e: NativeSyntheticEvent< TextInputChangeEventData > ) => {
@@ -92,6 +94,7 @@ export default function SetupScreen() {
 			tokenEndpoint: "https://public-api.wordpress.com/oauth2/token",
 		}
 	);
+
 	useEffect(() => {
 		if ( response?.type === 'success' ) {
 			const { access_token } = response.params;
@@ -138,15 +141,6 @@ export default function SetupScreen() {
 								autoFocus
 								blurOnSubmit
 								onChange={ handleChangeWPURL }
-								onBlur={ event => {
-									const host = ( new URL( normalizeUrl( wpURL, 'https' ) ) ).hostname;
-									fetch( `https://public-api.wordpress.com/rest/v1.1/sites/${host}` )
-									.then( response => response.json() )
-									.then( response => {
-										console.log( response );
-										setWpcomData( response );
-									} );
-								} }
 							/>
 							{ ! wpURL && (
 								<>
@@ -175,6 +169,63 @@ export default function SetupScreen() {
 									</LinkButton>
 								</>
 							) }
+							{ wpURL && ! appPasswordUrl && ! wpcomData && (
+								<Button
+									colorScheme="secondary"
+									margin={ '10%' }
+									size="md"
+									borderRadius="full"
+									marginLeft={ '6' }
+									marginRight={ '6' }
+									leftIcon={
+										<FontAwesome5
+											name="cogs"
+											size={ 24 }
+											color={ 'white' }
+											opacity={ 0.5 }
+										/>
+									}
+									onPress={ () => {
+										{
+											setConnectingError( '' );
+											setAppPasswordUrl( '' );
+											setWpcomData( null );
+											const probe = fetch( normalizeUrl( wpURL, 'https' ) + `?rest_route=/` )
+											.catch( ( err ) =>
+												fetch( normalizeUrl( wpURL, 'http' ) + `?rest_route=/` )
+											);
+		
+											probe.catch( error => {
+												const host = ( new URL( normalizeUrl( wpURL, 'https' ) ) ).hostname;
+												return fetch( `https://public-api.wordpress.com/rest/v1.1/sites/${host}` );
+											} )
+											.then( response => response.json() )
+											.then( response => {
+												console.log( 'WPCOM', response );
+												if ( response.ID ) {
+													setWpcomData( response );
+													return;
+												}
+												setConnectingError( 'Unknown site' );
+											 } );
+		
+											probe.then( response => response.json() )
+											.then( response => {
+												if ( response?.authentication?.['application-passwords']?.endpoints?.authorization ) {
+													setAppPasswordUrl( response.authentication['application-passwords'].endpoints.authorization );
+													return;
+												}
+												setConnectingError( 'This is a WordPress site, but it does not support application passwords.' );
+											} )
+											.catch( error => {
+												console.log( 'Unknown site',error );
+											} );
+										}
+									} }
+								>
+									{ 'Check this URL' }
+								</Button>
+							) }
 							{ connectingError && (
 								<Text
 									alignContent={ 'center' }
@@ -184,7 +235,7 @@ export default function SetupScreen() {
 									{ connectingError }
 								</Text>
 							) }
-							{ wpURL && ! wpcomData && (
+							{ wpURL && appPasswordUrl && (
 								<>
 									<Input
 										margin={ '3' }
@@ -220,7 +271,7 @@ export default function SetupScreen() {
 									) }
 
 									<Button
-										colorScheme="secondary"
+										colorScheme="tertiary"
 										margin={ '10%' }
 										size="md"
 										borderRadius="full"
@@ -243,7 +294,7 @@ export default function SetupScreen() {
 							{ wpcomData && (
 								<>
 									<Heading p={ 6 } size="m">
-										`WordPress.com site detected. Please chose your site while connecting on WordPress.com.`
+										WordPress.com site detected. Please chose your site while connecting on WordPress.com.
 									</Heading>
 									<Button
 										colorScheme="secondary"
