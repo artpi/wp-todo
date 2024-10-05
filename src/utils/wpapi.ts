@@ -8,10 +8,13 @@ export function authenticadedFetch(
 	wpcomToken: string
 ): Promise< any > {
 	let authorization = '';
-	if ( username.length > 0 ) {
+
+	if ( username && username.length > 0 ) {
 		authorization = 'Basic ' + encode( username + ':' + password );
-	} else if ( wpcomToken.length > 0 ) {
+	} else if ( wpcomToken && wpcomToken && wpcomToken.length > 0 ) {
 		authorization = 'Bearer ' + wpcomToken;
+	} else {
+		Promise.reject( 'No authorization provided' );
 	}
 
 	const args = {
