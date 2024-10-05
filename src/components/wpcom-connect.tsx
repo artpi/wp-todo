@@ -3,6 +3,7 @@ import { useDataManagerContext } from '../utils/data-manager';
 import { useAuthRequest, ResponseType, makeRedirectUri } from 'expo-auth-session';
 import { Button, Heading } from 'native-base';
 import { FontAwesome5 } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 
 export default function WpcomConnect( { wpcomData }: { wpcomData: any } ) {
 	const { setWpcomToken, connectWP } = useDataManagerContext();
@@ -11,8 +12,8 @@ export default function WpcomConnect( { wpcomData }: { wpcomData: any } ) {
 		  clientId: '106439',
 		  responseType: ResponseType.Token,
 		  redirectUri: makeRedirectUri( {
-			preferLocalhost: true,
 			scheme: 'wptodo',
+			path: 'wpcom-connect'
 		  } ),
 		  extraParams: {
 			blog: wpcomData.ID
@@ -23,9 +24,10 @@ export default function WpcomConnect( { wpcomData }: { wpcomData: any } ) {
 			tokenEndpoint: "https://public-api.wordpress.com/oauth2/token",
 		}
 	);
-
+	WebBrowser.maybeCompleteAuthSession();
 	console.log( 'wpcomData', request );
 	useEffect(() => {
+		console.log( 'Response', response );
 		if ( response?.type === 'success' ) {
 			const { access_token } = response.params;
 			console.log('Access Token:', access_token);
