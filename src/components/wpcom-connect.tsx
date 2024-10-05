@@ -11,6 +11,7 @@ export default function WpcomConnect( { wpcomData }: { wpcomData: any } ) {
 		  clientId: '106439',
 		  responseType: ResponseType.Token,
 		  redirectUri: makeRedirectUri( {
+			preferLocalhost: true,
 			scheme: 'wptodo',
 		  } ),
 		  extraParams: {

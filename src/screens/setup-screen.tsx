@@ -164,6 +164,21 @@ export default function SetupScreen() {
 									}
 									onPress={ () => {
 										{
+											function tryWpcom() {
+												const host = ( new URL( normalizeUrl( wpURL, 'https' ) ) ).hostname;
+												console.log( 'WPCOM', host );
+												return fetch( `https://public-api.wordpress.com/rest/v1.1/sites/${host}` )
+												.then( response => response.json() )
+												.then( response => {
+													console.log( 'WPCOM', response );
+													if ( response.ID ) {
+														setWpcomData( response );
+														return;
+													}
+													setConnectingError( 'Unknown site' );
+												 } );
+											}
+
 											setConnectingError( '' );
 											setAppPasswordUrl( '' );
 											setWpcomData( null );
@@ -171,22 +186,23 @@ export default function SetupScreen() {
 											.catch( ( err ) =>
 												fetch( normalizeUrl( wpURL, 'http' ) + `?rest_route=/` )
 											);
-		
-											probe.catch( error => {
-												const host = ( new URL( normalizeUrl( wpURL, 'https' ) ) ).hostname;
-												return fetch( `https://public-api.wordpress.com/rest/v1.1/sites/${host}` );
-											} )
-											.then( response => response.json() )
-											.then( response => {
-												console.log( 'WPCOM', response );
-												if ( response.ID ) {
-													setWpcomData( response );
-													return;
+
+											probe.catch( tryWpcom )
+											.catch( error => console.log( 'Error', error ) );
+											
+											probe.then( response => {
+												if ( ! response.ok ) {
+													setConnectingError( 'Unknown site' );
+													return Promise.reject( 'Unknown site' );
 												}
-												setConnectingError( 'Unknown site' );
-											 } );
-		
-											probe.then( response => response.json() )
+												
+												const contentType = response.headers.get('content-type');
+												if ( contentType && contentType.includes('application/json' ) ) {
+													return response.json();
+												}
+												tryWpcom();
+												return Promise.reject( 'Not a JSON response' );
+											} )
 											.then( response => {
 												if ( response?.authentication?.['application-passwords']?.endpoints?.authorization ) {
 													setAppPasswordUrl( response.authentication['application-passwords'].endpoints.authorization );
