@@ -1,4 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri, useAuthRequest, ResponseType } from 'expo-auth-session';
 import { Platform, KeyboardAvoidingView } from 'react-native';
 import {
 	useColorModeValue,
@@ -24,6 +26,8 @@ import { normalizeUrl } from '../utils/wpapi';
 import { FontAwesome5, Feather } from '@expo/vector-icons';
 import LinkButton from '../components/link-button';
 import { useDataManagerContext } from '../utils/data-manager';
+import WpcomConnect from '../components/wpcom-connect';
+
 
 export default function SetupScreen() {
 	const {
@@ -37,11 +41,13 @@ export default function SetupScreen() {
 		setData,
 		connecting,
 		connectingError,
+		setConnectingError,
 		connectWP,
 		posPlugin,
 		setPosPlugin,
+		setWpcomToken
 	} = useDataManagerContext();
-
+	WebBrowser.maybeCompleteAuthSession();
 	const pickerStyle = {
 		marginLeft: '6%',
 		marginRight: '6%',
@@ -51,6 +57,9 @@ export default function SetupScreen() {
 		pickerStyle[ 'marginTop' ] = -48;
 		pickerStyle[ 'marginBottom' ] = -48;
 	}
+
+	const [ wpcomData, setWpcomData ] = useState( null );
+	const [ appPasswordUrl, setAppPasswordUrl ] = useState( '' );
 
 	const handleChangeWPURL = useCallback(
 		( e: NativeSyntheticEvent< TextInputChangeEventData > ) => {
@@ -70,6 +79,8 @@ export default function SetupScreen() {
 		},
 		[ setPass ]
 	);
+	
+
 	return (
 		<AnimatedColorBox
 			flex={ 1 }
@@ -135,7 +146,89 @@ export default function SetupScreen() {
 									</LinkButton>
 								</>
 							) }
-							{ wpURL && (
+							{ wpURL && ! appPasswordUrl && ! wpcomData && (
+								<Button
+									colorScheme="secondary"
+									margin={ '10%' }
+									size="md"
+									borderRadius="full"
+									marginLeft={ '6' }
+									marginRight={ '6' }
+									leftIcon={
+										<FontAwesome5
+											name="cogs"
+											size={ 24 }
+											color={ 'white' }
+											opacity={ 0.5 }
+										/>
+									}
+									onPress={ () => {
+										{
+											function tryWpcom() {
+												const host = ( new URL( normalizeUrl( wpURL, 'https' ) ) ).hostname;
+												console.log( 'WPCOM', host );
+												return fetch( `https://public-api.wordpress.com/rest/v1.1/sites/${host}` )
+												.then( response => response.json() )
+												.then( response => {
+													console.log( 'WPCOM', response );
+													if ( response.ID ) {
+														setWpcomData( response );
+														return;
+													}
+													setConnectingError( 'Unknown site' );
+												 } );
+											}
+
+											setConnectingError( '' );
+											setAppPasswordUrl( '' );
+											setWpcomData( null );
+											const probe = fetch( normalizeUrl( wpURL, 'https' ) + `?rest_route=/` )
+											.catch( ( err ) =>
+												fetch( normalizeUrl( wpURL, 'http' ) + `?rest_route=/` )
+											);
+
+											probe.catch( tryWpcom )
+											.catch( error => console.log( 'Error', error ) );
+											
+											probe.then( response => {
+												if ( ! response.ok ) {
+													setConnectingError( 'Unknown site' );
+													return Promise.reject( 'Unknown site' );
+												}
+												
+												const contentType = response.headers.get('content-type');
+												if ( contentType && contentType.includes('application/json' ) ) {
+													return response.json();
+												}
+												tryWpcom();
+												return Promise.reject( 'Not a JSON response' );
+											} )
+											.then( response => {
+												if ( response?.authentication?.['application-passwords']?.endpoints?.authorization ) {
+													setAppPasswordUrl( response.authentication['application-passwords'].endpoints.authorization );
+													return;
+												}
+												setConnectingError( 'This is a WordPress site, but it does not support application passwords.' );
+											} )
+											.catch( error => {
+												console.log( 'Unknown site',error );
+											} );
+										}
+									} }
+								>
+									{ 'Check this URL' }
+								</Button>
+							) }
+							{ connectingError && (
+								<Text
+									alignContent={ 'center' }
+									margin={ '3' }
+									color={ 'red.500' }
+								>
+									{ connectingError }
+								</Text>
+							) }
+							{ wpURL && appPasswordUrl && (
 								<>
 									<Input
 										margin={ '3' }
@@ -169,18 +262,9 @@ export default function SetupScreen() {
 											here
 										</Link>
 									) }
-									{ connectingError && (
-										<Text
-											alignContent={ 'center' }
-											margin={ '3' }
-											color={ 'red.500' }
-										>
-											{ connectingError }
-										</Text>
-									) }
 
 									<Button
-										colorScheme="secondary"
+										colorScheme="tertiary"
 										margin={ '10%' }
 										size="md"
 										borderRadius="full"
@@ -199,6 +283,9 @@ export default function SetupScreen() {
 										{ 'Connect' }
 									</Button>
 								</>
+							) }
+							{ wpcomData && (
+								<WpcomConnect wpcomData={ wpcomData } />
 							) }
 						</>
 					) }

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { PanGestureHandlerProps } from 'react-native-gesture-handler';
-import { NativeSyntheticEvent, TextInputChangeEventData } from 'react-native';
+import { NativeSyntheticEvent, TextInputChangeEventData, Linking } from 'react-native';
 import {
 	Pressable,
 	Box,
@@ -13,29 +13,45 @@ import {
 	Checkbox,
 	Badge,
 	VStack,
+	Link
 } from 'native-base';
 import AnimatedTaskLabel from './animated-task-label';
 import SwipableView from './swipable-view';
 import { Feather } from '@expo/vector-icons';
+import { Todo } from '../utils/data-manager';
 
 interface Props extends Pick< PanGestureHandlerProps, 'simultaneousHandlers' > {
 	isEditing: boolean;
-	isDone: boolean;
 	onToggleCheckbox?: () => void;
 	onPressLabel?: () => void;
 	onRemove?: () => void;
 	onChangeSubject?: ( subject: string ) => void;
 	onFinishEditing?: () => void;
-	subject: string;
 	terms: string[];
+	data: Todo;
+}
+
+function getIconForUrl( url: string ) {
+	const protocol = new URL( url )?.protocol.replace( ':', '' );
+	if ( ! protocol ) {
+		return 'external-link';
+	}
+	const mapping = {
+		sms: 'message-square',
+		tel: 'phone',
+		mailto: 'mail',
+		call: 'phone',
+		https: 'external-link',
+		http: 'external-link',
+	};
+	return mapping[ protocol ] || 'external-link';
 }
 
 const TaskItem = ( props: Props ) => {
 	const {
 		isEditing,
-		isDone,
+		data,
 		onToggleCheckbox,
-		subject,
 		onPressLabel,
 		onRemove,
 		onChangeSubject,
@@ -111,17 +127,17 @@ const TaskItem = ( props: Props ) => {
 					>
 						<Checkbox
 							size="lg"
-							value={ subject }
-							isChecked={ isDone }
+							value={ data.subject }
+							isChecked={ data.done }
 							isDisabled={ true }
-							aria-label={ 'Complete ' + subject }
+							aria-label={ 'Complete ' + data.subject }
 						/>
 					</Box>
 				</Pressable>
 				{ isEditing ? (
 					<Input
 						placeholder="Task"
-						value={ subject }
+						value={ data.subject }
 						variant="unstyled"
 						fontSize={ 19 }
 						px={ 1 }
@@ -133,24 +149,37 @@ const TaskItem = ( props: Props ) => {
 						flexWrap={ 'wrap' }
 					/>
 				) : (
-					<Pressable onPress={ onPressLabel }>
-						<VStack>
+					<VStack>
+						<Pressable onPress={ onPressLabel }>
 							<Text
-								strikeThrough={ isDone }
+								strikeThrough={ data.done }
 								numberOfLines={ 3 }
 								fontSize={ 19 }
 								isTruncated={ false }
 								ellipsizeMode="tail"
 								maxW={ 320 }
-								color={ isDone ? doneTextColor : activeTextColor }
+								color={ data.done ? doneTextColor : activeTextColor }
 							>
-								{ subject }
+								{ data.subject }
 							</Text>
-							<HStack space={ 1 }>
-								{ terms }								
-							</HStack>
-						</VStack>
-					</Pressable>
+						</Pressable>
+						{ data.note && data.note.length > 0 && (
+							<Text my={ 2 } fontStyle={ 'italic' } color={ 'gray.500' } >{ data.note }</Text>
+						) }
+						<HStack space={ 1 }>
+							{
+								data.meta?.url && (
+									<Pressable onPress={ () => Linking.openURL( data.meta?.url ) }>
+										<Badge leftIcon={<Icon as={Feather} name={ getIconForUrl( data.meta?.url ) } size="sm" />} colorScheme="secondary" variant="solid" rounded="full">
+											{ new URL( data.meta.url )?.host?.replace( 'www.', '' ) }
+										</Badge>
+									</Pressable>
+								)
+							}
+							{ terms }
+						</HStack>
+					</VStack>
+					
 				) }
 			</HStack>
 		</SwipableView>
