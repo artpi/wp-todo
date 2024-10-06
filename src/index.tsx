@@ -14,7 +14,7 @@ const App: React.FC = () => {
 		// TODO: add loading screen
 		return;
 	}
-
+	console.log( 'DAT', data );
 	if ( ! data.connected ) {
 		return <SetupScreen />;
 	}

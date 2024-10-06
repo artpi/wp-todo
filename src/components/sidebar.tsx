@@ -90,7 +90,7 @@ const Term = ( {
 			>
 				{ taxonomy.name }
 			</MenuButton>
-			{ taxonomy.children &&
+			{ taxonomy.children ?
 				taxonomy.children
 					.filter( ( t ) => showEmpty || t.totalChildrenCount > 0 )
 					.map( ( t ) => (
@@ -102,7 +102,7 @@ const Term = ( {
 							navigation={ navigation }
 							indent={ indent + 1 }
 						/>
-					) ) }
+					) ) : null }
 		</>
 	);
 };
@@ -208,8 +208,8 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 						All Tasks
 					</MenuButton>
 					{ <Divider /> }
-					{ data.taxonomy &&
-						Object.keys( data.taxonomy_terms ).length &&
+					{ ( data.taxonomy &&
+						Object.keys( data.taxonomy_terms ).length ) ?
 						terms
 							.filter(
 								( t ) => showEmpty || t.totalChildrenCount > 0
@@ -222,7 +222,7 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 									state={ state }
 									navigation={ navigation }
 								/>
-							) ) }
+							) ): null }
 					<MenuButton
 						active={ false }
 						icon="external-link"

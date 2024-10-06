@@ -593,11 +593,14 @@ function createDataManager(): DataManager {
 
 					setData( ( oldData ) => ( { ...oldData, ...data } ) );
 					AsyncStorage.setItem( 'wpurl', url );
-					AsyncStorage.setItem( 'wplogin', username );
-					AsyncStorage.setItem( 'wppass', password );
-					AsyncStorage.setItem( 'wpcomtoken', wpcomToken );
+					if ( username && username.length > 0 ) {
+						AsyncStorage.setItem( 'wplogin', username );
+						AsyncStorage.setItem( 'wppass', password );
+					}
+					if ( wpcomToken && wpcomToken.length > 0 ) {
+						AsyncStorage.setItem( 'wpcomtoken', wpcomToken );
+					}
 					setConnectingError( '' );
-
 					return Promise.resolve( siteData );
 				} )
 				.then( ( site ) =>
@@ -701,6 +704,7 @@ function createDataManager(): DataManager {
 		iOSSyncedRemindersLists,
 		setDefaultView,
 		setWpcomToken,
+		getLinkToEndpoint: ( path: string ) => getLinkToEndpoint( data.routes, path ),
 	};
 }
 
