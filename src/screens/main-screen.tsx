@@ -65,6 +65,12 @@ export default function MainScreen( { route, navigation } ) {
 		Linking.openURL( getWPAdminUrlForPost( data, item.id ) );
 	}, [] );
 
+	useEffect( () => {
+		if ( data.connected ) {
+			sync();
+		}
+	}, [ data.connected ] );
+
 	return (
 		<AnimatedColorBox
 			flex={ 1 }
@@ -180,3 +186,4 @@ export default function MainScreen( { route, navigation } ) {
 		</AnimatedColorBox>
 	);
 }
+
