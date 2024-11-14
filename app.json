@@ -17,7 +17,8 @@
 		"assetBundlePatterns": [ "**/*" ],
 		"ios": {
 			"supportsTablet": true,
-			"bundleIdentifier": "com.piszek.wptodo"
+			"bundleIdentifier": "com.piszek.wptodo",
+			"buildNumber": "2"
 		},
 		"android": {
 			"adaptiveIcon": {
