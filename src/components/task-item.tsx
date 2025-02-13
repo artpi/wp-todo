@@ -22,7 +22,8 @@ import {
 import AnimatedTaskLabel from './animated-task-label';
 import SwipableView from './swipable-view';
 import { Feather } from '@expo/vector-icons';
-import { Todo } from '../utils/data-manager';
+import { Todo, useDataManagerContext } from '../utils/data-manager';
+import { getWPAdminUrlForPost } from '../utils/wpapi';
 
 interface Props extends Pick< PanGestureHandlerProps, 'simultaneousHandlers' > {
 	isEditing: boolean;
@@ -63,6 +64,7 @@ const TaskItem = ( props: Props ) => {
 		terms,
 		simultaneousHandlers,
 	} = props;
+	const { data: wpcomData } = useDataManagerContext();
 
 	const highlightColor = useToken(
 		'colors',
@@ -205,6 +207,70 @@ const TaskItem = ( props: Props ) => {
 									</Badge>
 								</Pressable>
 							) }
+							{ data.scheduled && (
+								<Badge
+									leftIcon={
+										<Icon
+											as={ Feather }
+											name={ 'calendar' }
+											size="sm"
+										/>
+									}
+									colorScheme="secondary"
+									variant="solid"
+									rounded="full"
+									size="sm"
+								>
+									{ new Date( data.scheduled * 1000 ).toLocaleDateString() }
+								</Badge>
+							) }
+							{ data.blocking &&
+								data.blocking.map( ( blocking ) => (
+									<Pressable
+										onPress={ () =>
+											Linking.openURL( getWPAdminUrlForPost( wpcomData, blocking ) )
+										}
+									>
+										<Badge
+											leftIcon={
+												<Icon
+													as={ Feather }
+													name={ 'x-octagon' }
+													size="sm"
+												/>
+											}
+											colorScheme="secondary"
+											variant="solid"
+											rounded="full"
+											size="sm"
+										>
+											{ "Next #" + blocking.toString() }
+										</Badge>
+									</Pressable>
+								) ) }
+							{ data.meta?.pos_blocked_by ? (
+								<Pressable
+									onPress={ () =>
+										Linking.openURL( getWPAdminUrlForPost( wpcomData, data.meta?.pos_blocked_by ) )
+									}
+								>
+									<Badge
+										leftIcon={
+											<Icon
+												as={ Feather }
+												name={ 'pause' }
+												size="sm"
+											/>
+										}
+										colorScheme="secondary"
+										variant="solid"
+										rounded="full"
+										size="sm"
+									>
+										{ "By #" + data.meta?.pos_blocked_by.toString() }
+									</Badge>
+								</Pressable>
+							) : null }
 							{ terms }
 						</HStack>
 					</VStack>

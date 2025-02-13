@@ -30,6 +30,8 @@ export interface StoredTodo {
 	};
 	status: 'publish' | 'private' | 'trash';
 	id: number;
+	scheduled?: number | boolean;
+	blocking?: number[];
 	meta: Record< string, any >;
 }
 
@@ -57,6 +59,8 @@ export interface Todo {
 	deleted?: boolean;
 	note?: string;
 	dirty: boolean;
+	scheduled?: number | boolean;
+	blocking?: number[];
 	terms?: number[];
 	meta?: Record< string, any >;
 }
@@ -213,6 +217,8 @@ async function syncData(
 							subject: post.title.raw,
 							done: false,
 							dirty: false,
+							scheduled: post.scheduled,
+							blocking: post.blocking,
 							note: post.excerpt.raw,
 							meta: post.meta,
 							terms: data.taxonomy
