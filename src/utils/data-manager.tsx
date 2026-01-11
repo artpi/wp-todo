@@ -207,6 +207,28 @@ async function syncData(
 		] )
 			.then( ( responses ) => {
 				const response = responses.flat();
+
+				// Save new Reminders to todos and sync with WP BEFORE setting local state
+				// This prevents circular sync issues
+				if (
+					Platform.OS === 'ios' &&
+					data.taxonomy &&
+					data.taxonomies[ data.taxonomy ] &&
+					data.reminders_calendars &&
+					data.reminders_calendars.length > 0
+				) {
+					console.log( 'Pushing reminders to WP' );
+					// Wait for iOS reminders sync to complete before setting todos
+					return pushRemindersToWP(
+						data,
+						response,
+						pushTodoToWP,
+						iOSSyncedRemindersLists
+					).then( () => response );
+				}
+				return Promise.resolve( response );
+			} )
+			.then( ( response ) => {
 				setTodos(
 					response
 						.filter( ( post: StoredTodo ) => {
@@ -229,23 +251,6 @@ async function syncData(
 								: [],
 						} ) )
 				);
-				// Save new Reminders to todos.
-				// push ios reminders to WP
-				if (
-					Platform.OS === 'ios' &&
-					data.taxonomy &&
-					data.taxonomies[ data.taxonomy ] &&
-					data.reminders_calendars &&
-					data.reminders_calendars.length > 0
-				) {
-					console.log( 'Pushing reminders to WP' );
-					pushRemindersToWP(
-						data,
-						response,
-						pushTodoToWP,
-						iOSSyncedRemindersLists
-					);
-				}
 
 				setRefreshing( false );
 			} )
@@ -392,6 +397,7 @@ function createDataManager(): DataManager {
 
 		let savedConfigObject: DataState = initialData;
 		let savedTodosObject: Todo[] = [];
+		let savedIosRemindersListsObject: { [ key: string ]: string } = {};
 
 		if ( savedConfig ) {
 			savedConfigObject = JSON.parse( savedConfig );
@@ -404,7 +410,8 @@ function createDataManager(): DataManager {
 		}
 
 		if ( savedIosRemindersLists ) {
-			setIosSyncedRemindersLists( JSON.parse( savedIosRemindersLists ) );
+			savedIosRemindersListsObject = JSON.parse( savedIosRemindersLists );
+			setIosSyncedRemindersLists( savedIosRemindersListsObject );
 		}
 
 		setLoading( false );
@@ -416,14 +423,14 @@ function createDataManager(): DataManager {
 			syncData(
 				savedTodosObject,
 				savedConfigObject,
-				storedLogin,
-				storedPass,
-				storedWpcomToken,
+				storedLogin || '',
+				storedPass || '',
+				storedWpcomToken || '',
 				setData,
 				setTodos,
 				setRefreshing,
 				pushTodoToWP,
-				iOSSyncedRemindersLists
+				savedIosRemindersListsObject
 			);
 		}
 	};
@@ -710,7 +717,8 @@ function createDataManager(): DataManager {
 		iOSSyncedRemindersLists,
 		setDefaultView,
 		setWpcomToken,
-		getLinkToEndpoint: ( path: string ) => getLinkToEndpoint( data.routes, path ),
+		getLinkToEndpoint: ( path: string ) =>
+			getLinkToEndpoint( data.routes, path ),
 	};
 }
 
