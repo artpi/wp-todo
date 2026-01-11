@@ -59,15 +59,6 @@ export function pushRemindersToWP(
 			);
 
 			if ( ! existing ) {
-				// Check if we're already creating this reminder in this sync cycle
-				const alreadyCreating = response.find(
-					( post ) => post.id === 'new_ios_' + reminder.id
-				);
-				if ( alreadyCreating ) {
-					// Already being created in this sync cycle
-					return;
-				}
-
 				// Add the reminder.
 				console.log(
 					'Adding reminder from iOS to WP:',
