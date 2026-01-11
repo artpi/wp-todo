@@ -221,14 +221,21 @@ const TaskItem = ( props: Props ) => {
 									rounded="full"
 									size="sm"
 								>
-									{ new Date( data.scheduled * 1000 ).toLocaleDateString() }
+									{ new Date(
+										data.scheduled * 1000
+									).toLocaleDateString() }
 								</Badge>
 							) }
 							{ data.blocking &&
 								data.blocking.map( ( blocking ) => (
 									<Pressable
 										onPress={ () =>
-											Linking.openURL( getWPAdminUrlForPost( wpcomData, blocking ) )
+											Linking.openURL(
+												getWPAdminUrlForPost(
+													wpcomData,
+													blocking
+												)
+											)
 										}
 									>
 										<Badge
@@ -244,14 +251,19 @@ const TaskItem = ( props: Props ) => {
 											rounded="full"
 											size="sm"
 										>
-											{ "Next #" + blocking.toString() }
+											{ 'Next #' + blocking.toString() }
 										</Badge>
 									</Pressable>
 								) ) }
 							{ data.meta?.pos_blocked_by ? (
 								<Pressable
 									onPress={ () =>
-										Linking.openURL( getWPAdminUrlForPost( wpcomData, data.meta?.pos_blocked_by ) )
+										Linking.openURL(
+											getWPAdminUrlForPost(
+												wpcomData,
+												data.meta?.pos_blocked_by
+											)
+										)
 									}
 								>
 									<Badge
@@ -267,7 +279,8 @@ const TaskItem = ( props: Props ) => {
 										rounded="full"
 										size="sm"
 									>
-										{ "By #" + data.meta?.pos_blocked_by.toString() }
+										{ 'By #' +
+											data.meta?.pos_blocked_by.toString() }
 									</Badge>
 								</Pressable>
 							) : null }

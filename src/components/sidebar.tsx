@@ -90,19 +90,22 @@ const Term = ( {
 			>
 				{ taxonomy.name }
 			</MenuButton>
-			{ taxonomy.children ?
-				taxonomy.children
-					.filter( ( t ) => showEmpty || t.totalChildrenCount > 0 )
-					.map( ( t ) => (
-						<Term
-							key={ t.slug }
-							showEmpty={ showEmpty }
-							taxonomy={ t }
-							state={ state }
-							navigation={ navigation }
-							indent={ indent + 1 }
-						/>
-					) ) : null }
+			{ taxonomy.children
+				? taxonomy.children
+						.filter(
+							( t ) => showEmpty || t.totalChildrenCount > 0
+						)
+						.map( ( t ) => (
+							<Term
+								key={ t.slug }
+								showEmpty={ showEmpty }
+								taxonomy={ t }
+								state={ state }
+								navigation={ navigation }
+								indent={ indent + 1 }
+							/>
+						) )
+				: null }
 		</>
 	);
 };
@@ -208,21 +211,22 @@ const Sidebar = ( props: DrawerContentComponentProps ) => {
 						All Tasks
 					</MenuButton>
 					{ <Divider /> }
-					{ ( data.taxonomy &&
-						Object.keys( data.taxonomy_terms ).length ) ?
-						terms
-							.filter(
-								( t ) => showEmpty || t.totalChildrenCount > 0
-							)
-							.map( ( t ) => (
-								<Term
-									key={ t.slug }
-									showEmpty={ showEmpty }
-									taxonomy={ t }
-									state={ state }
-									navigation={ navigation }
-								/>
-							) ): null }
+					{ data.taxonomy && Object.keys( data.taxonomy_terms ).length
+						? terms
+								.filter(
+									( t ) =>
+										showEmpty || t.totalChildrenCount > 0
+								)
+								.map( ( t ) => (
+									<Term
+										key={ t.slug }
+										showEmpty={ showEmpty }
+										taxonomy={ t }
+										state={ state }
+										navigation={ navigation }
+									/>
+								) )
+						: null }
 					<MenuButton
 						active={ false }
 						icon="external-link"
